@@ -153,14 +153,14 @@ export async function agentStatus(
   // Add capability information if available
   if (agent.capabilities) {
     const caps = agent.capabilities;
-    if (caps.canExecuteCode !== undefined) {
-      sections['Can Execute Code'] = caps.canExecuteCode ? 'Yes' : 'No';
+    if (caps.tools && caps.tools.length > 0) {
+      sections['Tools'] = caps.tools.join(', ');
     }
-    if (caps.canReadFiles !== undefined) {
-      sections['Can Read Files'] = caps.canReadFiles ? 'Yes' : 'No';
+    if (caps.languages && caps.languages.length > 0) {
+      sections['Languages'] = caps.languages.join(', ');
     }
-    if (caps.canWriteFiles !== undefined) {
-      sections['Can Write Files'] = caps.canWriteFiles ? 'Yes' : 'No';
+    if (caps.apiAccess && caps.apiAccess.length > 0) {
+      sections['API Access'] = caps.apiAccess.join(', ');
     }
   }
 

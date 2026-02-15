@@ -49,9 +49,46 @@ async function main() {
     });
   });
 
-  // Initialize CommandRegistry for command-based interaction
+  // Initialize command infrastructure
   const { CommandRegistry } = await import('./commands/CommandRegistry.js');
-  const registry = new CommandRegistry(channel);
+  const { AgentRegistry } = await import('./agents/AgentRegistry.js');
+  const { AgentStatus } = await import('./agents/Agent.js');
+  const { TaskManager } = await import('./tasks/TaskManager.js');
+
+  // Create agent registry and task manager
+  const agentRegistry = new AgentRegistry({ enableTimeoutChecking: true });
+  const taskManager = new TaskManager();
+
+  // Register this agent instance
+  const agentId = process.env.AGENT_ID || 'default-agent';
+  const agentRole = process.env.AGENT_ROLE || 'developer';
+
+  // Determine platform
+  let platform: 'Linux' | 'Windows' | 'macOS' = 'Linux';
+  if (process.platform === 'win32') platform = 'Windows';
+  else if (process.platform === 'darwin') platform = 'macOS';
+
+  await agentRegistry.add({
+    id: agentId,
+    role: agentRole,
+    platform,
+    environment: 'local',
+    capabilities: {
+      agentId,
+      roleType: agentRole,
+      platform,
+      environmentType: 'local',
+      tools: ['slack', 'node', 'typescript'],
+      languages: ['typescript', 'javascript'],
+    },
+    status: AgentStatus.CONNECTED,
+    currentTask: null,
+    registeredAt: new Date(),
+    lastSeenAt: new Date(),
+  });
+
+  // Create command registry with full dependencies
+  const commandRegistry = new CommandRegistry(channel, agentRegistry, taskManager);
 
   // Set up text message handler (for plain text messages)
   channel.onTextMessage(async (text, userId) => {
@@ -79,7 +116,7 @@ async function main() {
 
     // Route all other messages to CommandRegistry
     try {
-      await registry.handleCommand(text, userId);
+      await commandRegistry.handleCommand(text, userId);
     } catch (error) {
       console.error('❌ Command handling error:', error);
     }
@@ -100,8 +137,10 @@ async function main() {
     await channel.connect();
     console.log('✅ Connected successfully!');
     console.log(`📍 Channel ID: ${process.env.SLACK_CHANNEL_ID}`);
-    console.log(`🤖 Agent ID: ${process.env.AGENT_ID || 'default-agent'}`);
-    console.log(`👤 Agent Role: ${process.env.AGENT_ROLE || 'developer'}`);
+    console.log(`🤖 Agent ID: ${agentId}`);
+    console.log(`👤 Agent Role: ${agentRole}`);
+    console.log(`📊 Agent Registry: ${agentRegistry.getAll().length} agent(s) registered`);
+    console.log(`📝 Commands available: 30+ (type "help" in Slack)`);
     console.log('\n💬 Waiting for messages...\n');
   } catch (error) {
     console.error('❌ Failed to connect:', error);
