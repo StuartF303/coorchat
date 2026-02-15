@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+*.js.map
+*.d.ts.map
+
+# TypeScript
+*.tsbuildinfo
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+packages/relay-server/packages/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+.nyc_output/
+
+# Config
+.coorchat/config.json
+.coorchat/*.json
+!.coorchat/config.template.yaml
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Docker
+.dockerignore

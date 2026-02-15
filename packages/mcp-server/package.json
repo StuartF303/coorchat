@@ -1,0 +1,61 @@
+{
+  "name": "@coorchat/mcp-server",
+  "version": "1.0.0",
+  "description": "Multi-Agent Coordination System - MCP Server Component",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && tsc-alias",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "test:integration": "vitest --config vitest.integration.config.ts",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src/ --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": [
+    "multi-agent",
+    "coordination",
+    "ai-agents",
+    "mcp",
+    "discord",
+    "signalr",
+    "redis"
+  ],
+  "author": "CoorChat",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@microsoft/signalr": "^8.0.0",
+    "ioredis": "^5.3.2",
+    "@octokit/rest": "^20.0.2",
+    "zod": "^3.22.4",
+    "yaml": "^2.3.4",
+    "ws": "^8.16.0",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "ajv": "^8.12.0",
+    "ajv-formats": "^2.1.1",
+    "express": "^4.18.2",
+    "crypto": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@types/uuid": "^9.0.7",
+    "@types/ws": "^8.5.10",
+    "@types/express": "^4.17.21",
+    "typescript": "^5.3.3",
+    "tsx": "^4.7.0",
+    "tsc-alias": "^1.8.8",
+    "vitest": "^1.2.1",
+    "@vitest/coverage-v8": "^1.2.1",
+    "eslint": "^8.56.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "prettier": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

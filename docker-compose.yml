@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: ./packages/mcp-server
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=development
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - CHANNEL_TOKEN=${CHANNEL_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
+    volumes:
+      - ./.coorchat:/app/.coorchat
+      - ./packages/mcp-server/src:/app/src
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # Optional: Relay Server (C#/.NET component)
+  # relay-server:
+  #   build:
+  #     context: ./packages/relay-server
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development
+  #     - ConnectionStrings__DefaultConnection=${DATABASE_URL}
+  #   ports:
+  #     - "5000:80"
+  #   restart: unless-stopped
+
+  # Optional: Redis (if using Redis channel)
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

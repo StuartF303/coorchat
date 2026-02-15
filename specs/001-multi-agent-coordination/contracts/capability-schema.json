@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://coorchat.dev/schemas/capability/v1.0.json",
+  "title": "Agent Capability Schema",
+  "description": "JSON Schema for agent capability registration and discovery",
+  "type": "object",
+  "required": ["agentId", "roleType", "platform", "tools"],
+  "properties": {
+    "agentId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the agent"
+    },
+    "roleType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "description": "Agent role (extensible: developer, tester, architect, or custom)",
+      "examples": ["developer", "tester", "architect", "frontend", "backend", "infrastructure", "security-auditor", "documentation-writer"]
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["Linux", "macOS", "Windows"],
+      "description": "Operating system platform"
+    },
+    "environmentType": {
+      "type": "string",
+      "description": "Execution environment",
+      "examples": ["local", "GitHub Actions", "Azure DevOps", "AWS CodeBuild", "GitLab CI", "CircleCI"]
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "minItems": 1,
+      "description": "Available commands, CLIs, or APIs the agent can use",
+      "examples": [["git", "npm", "docker"], ["pytest", "jest", "selenium"], ["aws-cli", "terraform", "kubectl"]]
+    },
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 50
+      },
+      "description": "Programming languages the agent can work with",
+      "examples": [["TypeScript", "JavaScript", "Python"], ["C#", "Java", "Go"]]
+    },
+    "apiAccess": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 100
+      },
+      "description": "External APIs the agent has access to",
+      "examples": [["GitHub API", "Stripe API", "Twilio API"], ["OpenAI API", "Anthropic API"]]
+    },
+    "resourceLimits": {
+      "$ref": "#/definitions/resourceLimits"
+    },
+    "customMetadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Custom capability metadata for specialized agent types"
+    }
+  },
+  "definitions": {
+    "resourceLimits": {
+      "type": "object",
+      "description": "Resource constraints and quotas for the agent",
+      "properties": {
+        "apiQuotaPerHour": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum API calls per hour"
+        },
+        "maxConcurrentTasks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 1,
+          "description": "Maximum number of simultaneous tasks"
+        },
+        "rateLimitPerMinute": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Maximum requests per minute"
+        },
+        "memoryLimitMB": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Memory constraint in megabytes"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "agentId": "550e8400-e29b-41d4-a716-446655440000",
+      "roleType": "developer",
+      "platform": "Linux",
+      "environmentType": "GitHub Actions",
+      "tools": ["git", "npm", "docker", "typescript", "jest"],
+      "languages": ["TypeScript", "JavaScript", "Python"],
+      "apiAccess": ["GitHub API", "npm Registry"],
+      "resourceLimits": {
+        "apiQuotaPerHour": 5000,
+        "maxConcurrentTasks": 2,
+        "rateLimitPerMinute": 60,
+        "memoryLimitMB": 2048
+      }
+    },
+    {
+      "agentId": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+      "roleType": "tester",
+      "platform": "Windows",
+      "environmentType": "local",
+      "tools": ["playwright", "jest", "selenium"],
+      "languages": ["JavaScript", "TypeScript"],
+      "apiAccess": ["BrowserStack API"],
+      "resourceLimits": {
+        "apiQuotaPerHour": 1000,
+        "maxConcurrentTasks": 3,
+        "rateLimitPerMinute": 30,
+        "memoryLimitMB": 4096
+      },
+      "customMetadata": {
+        "browserSupport": ["chrome", "firefox", "safari"],
+        "testTypes": ["unit", "integration", "e2e"]
+      }
+    }
+  ]
+}
