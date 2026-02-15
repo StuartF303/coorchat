@@ -10,13 +10,16 @@ namespace CoorChat.RelayServer.Api.Hubs
     public class AgentHub : Hub
     {
         private readonly IConnectionManager _connectionManager;
+        private readonly IAuthenticationService _authService;
         private readonly ILogger<AgentHub> _logger;
 
         public AgentHub(
             IConnectionManager connectionManager,
+            IAuthenticationService authService,
             ILogger<AgentHub> logger)
         {
             _connectionManager = connectionManager;
+            _authService = authService;
             _logger = logger;
         }
 
@@ -158,8 +161,48 @@ namespace CoorChat.RelayServer.Api.Hubs
         /// </summary>
         public override async Task OnConnectedAsync()
         {
+            // Validate authentication token
+            var httpContext = Context.GetHttpContext();
+            var queryToken = httpContext?.Request.Query["access_token"].ToString();
+            var authHeader = httpContext?.Request.Headers["Authorization"].ToString() ?? string.Empty;
+
+            // Remove "Bearer " prefix if present
+            var headerToken = authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)
+                ? authHeader.Substring(7).Trim()
+                : authHeader;
+
+            _logger.LogDebug(
+                "OnConnectedAsync - ConnectionId: {ConnectionId}, QueryToken: {QueryToken}, HeaderToken: {HeaderToken}, RawAuth: {RawAuth}",
+                Context.ConnectionId,
+                string.IsNullOrWhiteSpace(queryToken) ? "MISSING" : $"PRESENT({queryToken?.Length ?? 0})",
+                string.IsNullOrWhiteSpace(headerToken) ? "MISSING" : $"PRESENT({headerToken?.Length ?? 0})",
+                string.IsNullOrWhiteSpace(authHeader) ? "MISSING" : authHeader.Substring(0, Math.Min(20, authHeader.Length)));
+
+            var token = !string.IsNullOrWhiteSpace(queryToken) ? queryToken
+                      : !string.IsNullOrWhiteSpace(headerToken) ? headerToken
+                      : null;
+
+            if (string.IsNullOrEmpty(token))
+            {
+                _logger.LogWarning(
+                    "Connection rejected - missing token: {ConnectionId}",
+                    Context.ConnectionId);
+                Context.Abort();
+                return;
+            }
+
+            var isValid = await _authService.ValidateTokenAsync(token);
+            if (!isValid)
+            {
+                _logger.LogWarning(
+                    "Connection rejected - invalid token: {ConnectionId}",
+                    Context.ConnectionId);
+                Context.Abort();
+                return;
+            }
+
             _logger.LogInformation(
-                "Client connected: {ConnectionId}",
+                "Client connected and authenticated: {ConnectionId}",
                 Context.ConnectionId);
 
             await base.OnConnectedAsync();

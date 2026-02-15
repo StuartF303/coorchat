@@ -29,6 +29,13 @@ namespace CoorChat.RelayServer.Api.Middleware
                 return;
             }
 
+            // Skip authentication for SignalR hub - it handles auth via access token
+            if (context.Request.Path.StartsWithSegments("/agentHub"))
+            {
+                await _next(context);
+                return;
+            }
+
             // Extract token from Authorization header
             var authHeader = context.Request.Headers["Authorization"].ToString();
             if (string.IsNullOrEmpty(authHeader))
