@@ -147,20 +147,28 @@ async function main() {
     process.exit(1);
   }
 
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\n\n👋 Shutting down...');
-    await channel.disconnect();
-    console.log('✅ Disconnected');
-    process.exit(0);
-  });
+  // Start heartbeat to keep local agent showing as connected
+  // Send heartbeat every 15 seconds (half the 30-second timeout)
+  const heartbeatInterval = setInterval(async () => {
+    try {
+      await agentRegistry.heartbeat(agentId);
+    } catch (error) {
+      console.error('❌ Failed to send heartbeat:', error);
+    }
+  }, 15000);
 
-  process.on('SIGTERM', async () => {
+  // Handle graceful shutdown
+  const shutdown = async () => {
     console.log('\n\n👋 Shutting down...');
+    clearInterval(heartbeatInterval);
+    agentRegistry.destroy();
     await channel.disconnect();
     console.log('✅ Disconnected');
     process.exit(0);
-  });
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 main().catch((error) => {
