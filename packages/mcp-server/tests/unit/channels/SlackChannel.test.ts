@@ -76,7 +76,7 @@ describe('SlackChannel', () => {
       channel = new SlackChannel(config);
 
       expect(channel).toBeDefined();
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
 
     it('should setup Socket Mode event handlers', () => {
@@ -93,7 +93,7 @@ describe('SlackChannel', () => {
       channel = new SlackChannel(config);
       await channel.connect();
 
-      expect(channel.getStatus()).toBe('connected');
+      expect(channel.status).toBe('connected');
 
       const webClient = (channel as any).webClient;
       expect(webClient.auth.test).toHaveBeenCalled();
@@ -107,18 +107,17 @@ describe('SlackChannel', () => {
       await channel.connect();
       await channel.disconnect();
 
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
 
       const socketClient = (channel as any).socketClient;
       expect(socketClient.disconnect).toHaveBeenCalled();
     });
 
     it('should throw error if bot cannot access channel', async () => {
-      const webClient = (vi.mocked(await import('@slack/web-api')).WebClient as any)
-        .mock.results[0].value;
-      webClient.conversations.info.mockRejectedValueOnce(new Error('channel_not_found'));
-
       channel = new SlackChannel(config);
+
+      const webClient = (channel as any).webClient;
+      webClient.conversations.info.mockRejectedValueOnce(new Error('channel_not_found'));
 
       await expect(channel.connect()).rejects.toThrow(
         'Cannot access Slack channel'
@@ -155,7 +154,7 @@ describe('SlackChannel', () => {
       const webClient = (channel as any).webClient;
       expect(webClient.chat.postMessage).toHaveBeenCalledWith({
         channel: 'C789',
-        text: expect.stringContaining('TASK_ASSIGNED'),
+        text: expect.stringContaining('task_assigned'),
       });
     });
 
@@ -194,7 +193,7 @@ describe('SlackChannel', () => {
 
     it('should handle incoming protocol messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
         protocolVersion: '1.0.0',
@@ -255,7 +254,7 @@ describe('SlackChannel', () => {
 
     it('should ignore messages from bot itself', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const socketClient = (channel as any).socketClient;
       const messageHandler = socketClient.on.mock.calls.find(
@@ -279,7 +278,7 @@ describe('SlackChannel', () => {
 
     it('should ignore messages from other channels', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const socketClient = (channel as any).socketClient;
       const messageHandler = socketClient.on.mock.calls.find(
@@ -303,7 +302,7 @@ describe('SlackChannel', () => {
 
     it('should ignore message subtypes', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const socketClient = (channel as any).socketClient;
       const messageHandler = socketClient.on.mock.calls.find(

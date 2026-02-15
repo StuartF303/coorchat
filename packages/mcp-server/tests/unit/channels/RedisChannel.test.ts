@@ -77,7 +77,7 @@ describe('RedisChannel', () => {
       channel = new RedisChannel(config);
 
       expect(channel).toBeDefined();
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
 
     it('should use keyPrefix for channel name', () => {
@@ -106,7 +106,7 @@ describe('RedisChannel', () => {
       channel = new RedisChannel(config);
       await channel.connect();
 
-      expect(channel.getStatus()).toBe('connected');
+      expect(channel.status).toBe('connected');
 
       const subscriber = (channel as any).subscriber;
       expect(subscriber.subscribe).toHaveBeenCalledWith('test:channel');
@@ -117,7 +117,7 @@ describe('RedisChannel', () => {
       await channel.connect();
       await channel.disconnect();
 
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
 
       const subscriber = (channel as any).subscriber;
       expect(subscriber.unsubscribe).toHaveBeenCalledWith('test:channel');
@@ -191,7 +191,7 @@ describe('RedisChannel', () => {
 
     it('should handle incoming Redis messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
         protocolVersion: '1.0.0',
@@ -220,7 +220,7 @@ describe('RedisChannel', () => {
 
     it('should reject messages with invalid authentication', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
         protocolVersion: '1.0.0',
@@ -243,7 +243,7 @@ describe('RedisChannel', () => {
 
     it('should ignore invalid JSON messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       // Simulate Redis message with invalid JSON
       const subscriber = (channel as any).subscriber;

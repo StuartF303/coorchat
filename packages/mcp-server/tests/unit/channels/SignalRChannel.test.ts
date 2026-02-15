@@ -77,7 +77,7 @@ describe('SignalRChannel', () => {
       channel = new SignalRChannel(config);
 
       expect(channel).toBeDefined();
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
 
     it('should warn when using HTTP instead of HTTPS', () => {
@@ -111,7 +111,7 @@ describe('SignalRChannel', () => {
       channel = new SignalRChannel(config);
       await channel.connect();
 
-      expect(channel.getStatus()).toBe('connected');
+      expect(channel.status).toBe('connected');
 
       const connection = (channel as any).connection;
       expect(connection.start).toHaveBeenCalled();
@@ -122,7 +122,7 @@ describe('SignalRChannel', () => {
       await channel.connect();
       await channel.disconnect();
 
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
 
       const connection = (channel as any).connection;
       expect(connection.stop).toHaveBeenCalled();
@@ -198,7 +198,7 @@ describe('SignalRChannel', () => {
 
     it('should handle incoming SignalR messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
         protocolVersion: '1.0.0',
@@ -225,7 +225,7 @@ describe('SignalRChannel', () => {
 
     it('should ignore invalid JSON messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const connection = (channel as any).connection;
       const receiveHandler = connection.on.mock.calls.find(
@@ -241,7 +241,7 @@ describe('SignalRChannel', () => {
 
     it('should ignore invalid protocol messages', async () => {
       const receivedMessages: any[] = [];
-      channel.on('message', (msg) => receivedMessages.push(msg));
+      channel.onMessage((msg) => receivedMessages.push(msg));
 
       const invalidMessage = {
         // Missing required fields
@@ -273,7 +273,7 @@ describe('SignalRChannel', () => {
 
       reconnectingHandler(new Error('Connection lost'));
 
-      expect(channel.getStatus()).toBe('reconnecting');
+      expect(channel.status).toBe('reconnecting');
     });
 
     it('should handle reconnected state', async () => {
@@ -282,7 +282,7 @@ describe('SignalRChannel', () => {
 
       reconnectedHandler('new-connection-id');
 
-      expect(channel.getStatus()).toBe('connected');
+      expect(channel.status).toBe('connected');
     });
 
     it('should handle connection close', async () => {
@@ -291,7 +291,7 @@ describe('SignalRChannel', () => {
 
       closeHandler(new Error('Connection closed'));
 
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
   });
 

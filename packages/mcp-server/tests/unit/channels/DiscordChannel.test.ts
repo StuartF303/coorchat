@@ -78,7 +78,7 @@ describe('DiscordChannel', () => {
       channel = new DiscordChannel(config);
 
       expect(channel).toBeDefined();
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
 
     it('should setup event handlers on construction', () => {
@@ -94,7 +94,7 @@ describe('DiscordChannel', () => {
       channel = new DiscordChannel(config);
       await channel.connect();
 
-      expect(channel.getStatus()).toBe('connected');
+      expect(channel.status).toBe('connected');
     });
 
     it('should disconnect from Discord successfully', async () => {
@@ -102,26 +102,26 @@ describe('DiscordChannel', () => {
       await channel.connect();
       await channel.disconnect();
 
-      expect(channel.getStatus()).toBe('disconnected');
+      expect(channel.status).toBe('disconnected');
     });
 
     it('should throw error if channel not found', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
-      mockClient.channels.fetch.mockResolvedValueOnce(null);
-
       channel = new DiscordChannel(config);
+
+      const mockClient = (channel as any).client;
+      mockClient.channels.fetch.mockResolvedValueOnce(null);
 
       await expect(channel.connect()).rejects.toThrow('Channel not found');
     });
 
     it('should throw error if not text channel', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
+      channel = new DiscordChannel(config);
+
+      const mockClient = (channel as any).client;
       const mockChannel = {
         isTextBased: () => false,
       };
       mockClient.channels.fetch.mockResolvedValueOnce(mockChannel);
-
-      channel = new DiscordChannel(config);
 
       await expect(channel.connect()).rejects.toThrow('not a text channel');
     });
@@ -145,11 +145,11 @@ describe('DiscordChannel', () => {
 
       await channel.sendMessage(message);
 
-      const mockClient = (Client as any).mock.results[0].value;
+      const mockClient = (channel as any).client;
       const mockTextChannel = await mockClient.channels.fetch();
 
       expect(mockTextChannel.send).toHaveBeenCalledWith(
-        expect.stringContaining('TASK_ASSIGNED')
+        expect.stringContaining('task_assigned')
       );
     });
 
@@ -181,7 +181,7 @@ describe('DiscordChannel', () => {
       };
 
       await expect(channel.sendMessage(message)).rejects.toThrow(
-        'Not connected'
+        'channel is disconnected'
       );
     });
   });
@@ -197,14 +197,14 @@ describe('DiscordChannel', () => {
     });
 
     it('should fail ping when client not ready', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
+      const mockClient = (channel as any).client;
       mockClient.isReady.mockReturnValueOnce(false);
 
       await expect(channel.ping()).rejects.toThrow('client not ready');
     });
 
     it('should fail ping when websocket disconnected', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
+      const mockClient = (channel as any).client;
       mockClient.ws.ping = -1;
 
       await expect(channel.ping()).rejects.toThrow('websocket not connected');
@@ -225,21 +225,23 @@ describe('DiscordChannel', () => {
     });
 
     it('should fetch message history', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
-      const mockTextChannel = await mockClient.channels.fetch();
+      const mockTextChannel = (channel as any).textChannel;
+      expect(mockTextChannel).toBeDefined(); // Verify textChannel is set
 
       const mockMessage = {
         author: { bot: true, id: 'bot-123' },
         content: JSON.stringify({
-          protocolVersion: '1.0.0',
+          protocolVersion: '1.0',
           messageType: MessageType.HEARTBEAT,
           senderId: 'agent-1',
           timestamp: new Date().toISOString(),
-          priority: 'low',
+          priority: 3,
         }),
       };
 
-      mockTextChannel.messages.fetch.mockResolvedValueOnce(
+      // Clear previous mock calls and set new return value
+      mockTextChannel.messages.fetch.mockClear();
+      mockTextChannel.messages.fetch.mockResolvedValue(
         new Map([['msg-1', mockMessage]])
       );
 
@@ -250,15 +252,15 @@ describe('DiscordChannel', () => {
     });
 
     it('should skip invalid JSON messages in history', async () => {
-      const mockClient = (Client as any).mock.results[0].value;
-      const mockTextChannel = await mockClient.channels.fetch();
+      const mockTextChannel = (channel as any).textChannel;
 
       const mockMessages = new Map([
         ['msg-1', { author: { bot: true }, content: 'invalid json' }],
         ['msg-2', { author: { bot: true }, content: '{ incomplete json' }],
       ]);
 
-      mockTextChannel.messages.fetch.mockResolvedValueOnce(mockMessages);
+      mockTextChannel.messages.fetch.mockClear();
+      mockTextChannel.messages.fetch.mockResolvedValue(mockMessages);
 
       const history = await channel.getHistory();
 
