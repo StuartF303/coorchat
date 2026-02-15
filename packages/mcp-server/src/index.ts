@@ -40,12 +40,21 @@ async function main() {
   // Create and connect Slack channel
   const channel = new SlackChannel(config);
 
-  // Set up message handler
+  // Set up protocol message handler
   channel.onMessage((message) => {
-    console.log('📨 Received message:', {
+    console.log('📨 Received protocol message:', {
       type: message.messageType,
       from: message.senderId,
       timestamp: message.timestamp,
+    });
+  });
+
+  // Set up text message handler (for plain text messages)
+  channel.onTextMessage((text, userId) => {
+    console.log('💬 Received text message:', {
+      text,
+      from: userId,
+      timestamp: new Date().toISOString(),
     });
   });
 
