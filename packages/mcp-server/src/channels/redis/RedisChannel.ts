@@ -33,7 +33,7 @@ export class RedisChannel extends ChannelAdapter {
   constructor(config: ChannelConfig) {
     super(config);
 
-    this.redisConfig = config.connectionParams as RedisConfig;
+    this.redisConfig = config.connectionParams as unknown as RedisConfig;
     this.channelName = `${this.redisConfig.keyPrefix || 'coorchat:'}channel`;
 
     // Create Redis options with authentication
@@ -297,29 +297,9 @@ export class RedisChannel extends ChannelAdapter {
       return parsedMessages;
     } catch (error) {
       this.logger.debug('Message history not available', {
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error : new Error(String(error)),
       });
       return [];
-    }
-  }
-
-  /**
-   * Store message in history (if history persistence is enabled)
-   */
-  private async storeInHistory(message: Message): Promise<void> {
-    try {
-      const historyKey = `${this.redisConfig.keyPrefix || 'coorchat:'}history`;
-      const messageStr = JSON.stringify(message);
-
-      // Add to list (newest first)
-      await this.publisher.lpush(historyKey, messageStr);
-
-      // Trim to keep only recent messages (e.g., 1000 messages)
-      await this.publisher.ltrim(historyKey, 0, 999);
-    } catch (error) {
-      this.logger.debug('Failed to store message in history', {
-        error: error instanceof Error ? error.message : String(error),
-      });
     }
   }
 

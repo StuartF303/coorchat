@@ -66,7 +66,7 @@ interface DeduplicationEntry {
  * SyncManager class
  */
 export class SyncManager {
-  private client: GitHubClient;
+  public readonly client: GitHubClient;
   private webhookHandler?: WebhookHandler;
   private pollingService?: PollingService;
   private logger: Logger;
@@ -293,7 +293,7 @@ export class SyncManager {
   private isDuplicate(
     issueNumber: number,
     action: string,
-    source: 'webhook' | 'polling'
+    _source: 'webhook' | 'polling'
   ): boolean {
     const now = new Date();
     const cutoff = new Date(now.getTime() - this.deduplicationWindowMs);

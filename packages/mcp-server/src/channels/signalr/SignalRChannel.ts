@@ -5,6 +5,7 @@
 
 import * as signalR from '@microsoft/signalr';
 import { ChannelAdapter } from '../base/ChannelAdapter.js';
+import { ConnectionStatus } from '../base/Channel.js';
 import type { ChannelConfig } from '../base/Channel.js';
 import type { Message } from '../../protocol/Message.js';
 import { validator } from '../../protocol/MessageValidator.js';
@@ -27,7 +28,7 @@ export class SignalRChannel extends ChannelAdapter {
   constructor(config: ChannelConfig) {
     super(config);
 
-    this.signalRConfig = config.connectionParams as SignalRConfig;
+    this.signalRConfig = config.connectionParams as unknown as SignalRConfig;
 
     // Validate TLS/HTTPS usage for security
     if (!this.signalRConfig.hubUrl.startsWith('https://')) {
@@ -73,23 +74,23 @@ export class SignalRChannel extends ChannelAdapter {
     // Handle reconnecting
     this.connection.onreconnecting((error) => {
       this.logger.warn('SignalR reconnecting', {
-        error: error?.message,
+        error: error || undefined,
       });
-      this.setStatus('reconnecting');
+      this.setStatus(ConnectionStatus.RECONNECTING);
     });
 
     // Handle reconnected
     this.connection.onreconnected((connectionId) => {
       this.logger.info('SignalR reconnected', { connectionId });
-      this.setStatus('connected');
+      this.setStatus(ConnectionStatus.CONNECTED);
     });
 
     // Handle close
     this.connection.onclose((error) => {
       this.logger.warn('SignalR connection closed', {
-        error: error?.message,
+        error: error || undefined,
       });
-      this.setStatus('disconnected');
+      this.setStatus(ConnectionStatus.DISCONNECTED);
     });
   }
 
@@ -208,7 +209,7 @@ export class SignalRChannel extends ChannelAdapter {
       return messages;
     } catch (error) {
       this.logger.debug('Message history not supported by SignalR hub', {
-        error: error instanceof Error ? error.message : String(error),
+        error: error instanceof Error ? error : new Error(String(error)),
       });
       return [];
     }

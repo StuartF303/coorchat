@@ -4,7 +4,7 @@
  */
 
 import type { Task, TaskStatus } from './Task.js';
-import { TaskStatus as TaskStatusEnum, isTaskTerminal } from './Task.js';
+import { TaskStatus as TaskStatusEnum } from './Task.js';
 import type { Logger } from '../logging/Logger.js';
 import { createLogger } from '../logging/Logger.js';
 

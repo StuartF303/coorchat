@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\CoorChat.RelayServer.Api\CoorChat.RelayServer.Api.csproj" />
     <ProjectReference Include="..\..\src\CoorChat.RelayServer.Core\CoorChat.RelayServer.Core.csproj" />
     <ProjectReference Include="..\..\src\CoorChat.RelayServer.Data\CoorChat.RelayServer.Data.csproj" />
   </ItemGroup>

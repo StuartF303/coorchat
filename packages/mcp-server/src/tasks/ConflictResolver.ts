@@ -3,8 +3,6 @@
  * Resolves conflicts when multiple agents claim the same task simultaneously
  */
 
-import type { Task } from './Task.js';
-import type { Agent } from '../agents/Agent.js';
 import type { Logger } from '../logging/Logger.js';
 import { createLogger } from '../logging/Logger.js';
 
@@ -113,7 +111,7 @@ export class ConflictResolver {
   /**
    * Wait for potential simultaneous claims
    */
-  private async waitForConflicts(taskId: string): Promise<void> {
+  private async waitForConflicts(_taskId: string): Promise<void> {
     return new Promise((resolve) => {
       setTimeout(resolve, this.simultaneousWindowMs);
     });

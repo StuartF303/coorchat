@@ -7,7 +7,6 @@ import { Client, GatewayIntentBits, TextChannel, Message as DiscordMessage } fro
 import { ChannelAdapter } from '../base/ChannelAdapter.js';
 import type { ChannelConfig } from '../base/Channel.js';
 import type { Message } from '../../protocol/Message.js';
-import { MessageBuilder } from '../../protocol/MessageBuilder.js';
 import { validator } from '../../protocol/MessageValidator.js';
 
 /**
@@ -30,7 +29,7 @@ export class DiscordChannel extends ChannelAdapter {
   constructor(config: ChannelConfig) {
     super(config);
 
-    this.discordConfig = config.connectionParams as DiscordConfig;
+    this.discordConfig = config.connectionParams as unknown as DiscordConfig;
 
     // Initialize Discord client
     this.client = new Client({
@@ -119,7 +118,7 @@ export class DiscordChannel extends ChannelAdapter {
    * Authenticate incoming message
    * For Discord, we rely on channel access control
    */
-  private authenticateMessage(message: any): boolean {
+  private authenticateMessage(_message: any): boolean {
     // Basic validation that message has required fields
     // Discord channel access itself provides authentication
     return true;
@@ -224,10 +223,11 @@ export class DiscordChannel extends ChannelAdapter {
         options.before = String(before.getTime());
       }
 
-      const messages = await this.textChannel.messages.fetch(options);
+      const fetchResult = await this.textChannel.messages.fetch(options);
       const parsedMessages: Message[] = [];
+      const messages = fetchResult instanceof Map ? Array.from(fetchResult.values()) : [fetchResult];
 
-      for (const [_, discordMessage] of messages) {
+      for (const discordMessage of messages) {
         if (discordMessage.author.bot) {
           try {
             const parsed = JSON.parse(discordMessage.content);

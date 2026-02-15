@@ -358,18 +358,20 @@ export class RoleManager {
 
       let score = 0;
 
+      const caps = role.suggestedCapabilities;
+
       // Match tools
-      if (capabilities.tools && role.suggestedCapabilities.tools) {
+      if (capabilities.tools && caps.tools) {
         const matchingTools = capabilities.tools.filter((tool) =>
-          role.suggestedCapabilities.tools?.includes(tool)
+          caps.tools!.includes(tool)
         );
         score += matchingTools.length;
       }
 
       // Match languages
-      if (capabilities.languages && role.suggestedCapabilities.languages) {
+      if (capabilities.languages && caps.languages) {
         const matchingLanguages = capabilities.languages.filter((lang) =>
-          role.suggestedCapabilities.languages?.includes(lang)
+          caps.languages!.includes(lang)
         );
         score += matchingLanguages.length;
       }

@@ -66,7 +66,7 @@ export class WebhookHandler {
     // Raw body parser for signature verification
     this.app.use(
       express.json({
-        verify: (req: any, res, buf) => {
+        verify: (req: any, _res, buf) => {
           req.rawBody = buf.toString('utf-8');
         },
       })
@@ -78,7 +78,7 @@ export class WebhookHandler {
    */
   private setupRoutes(): void {
     // Health check endpoint
-    this.app.get('/health', (req, res) => {
+    this.app.get('/health', (_req, res) => {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
     });
 

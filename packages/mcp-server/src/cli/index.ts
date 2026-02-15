@@ -7,11 +7,8 @@ import { Command } from 'commander';
 import * as dotenv from 'dotenv';
 import { TokenGenerator } from '../config/TokenGenerator.js';
 import { ChannelFactory } from '../channels/base/ChannelFactory.js';
-import { AgentRegistry } from '../agents/AgentRegistry.js';
 import { RoleManager } from '../agents/RoleManager.js';
-import { TaskQueue } from '../tasks/TaskQueue.js';
 import type { ChannelConfig } from '../channels/base/Channel.js';
-import type { Agent } from '../agents/Agent.js';
 
 // Load environment variables
 dotenv.config();
@@ -137,18 +134,6 @@ agentCmd
 
       console.log('✅ Connected to channel');
 
-      // Register agent
-      const agent: Agent = {
-        id: agentId,
-        role,
-        capabilities: [],
-        status: 'active',
-        metadata: {
-          platform: process.platform,
-          environment: 'CLI',
-        },
-      };
-
       // Listen for messages
       channel.onMessage((message) => {
         console.log(`📨 [${message.messageType}] from ${message.senderId}`);
@@ -201,7 +186,11 @@ roleCmd
     roles.forEach((role) => {
       console.log(`${role.name}:`);
       console.log(`  Description: ${role.description}`);
-      console.log(`  Capabilities: ${role.defaultCapabilities.join(', ')}`);
+      const caps = role.suggestedCapabilities;
+      if (caps) {
+        const allCaps = [...(caps.tools || []), ...(caps.languages || [])];
+        console.log(`  Capabilities: ${allCaps.join(', ')}`);
+      }
       console.log('');
     });
   });
@@ -209,13 +198,14 @@ roleCmd
 roleCmd
   .command('suggest <...capabilities>')
   .description('Suggest roles based on capabilities')
-  .action((capabilities) => {
+  .action((capabilities: string) => {
     const roleManager = new RoleManager();
-    const suggestions = roleManager.suggestRole(capabilities);
+    const capList = capabilities.split(',').map((c: string) => c.trim());
+    const suggestions = roleManager.suggestRoles({ tools: capList });
 
     if (suggestions.length > 0) {
       console.log('💡 Suggested Roles:\n');
-      suggestions.forEach((role, index) => {
+      suggestions.forEach((role: { name: string; description: string }, index: number) => {
         console.log(`${index + 1}. ${role.name}`);
         console.log(`   ${role.description}`);
         console.log('');

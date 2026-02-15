@@ -3,7 +3,7 @@
  * Manages available tasks and assigns them to agents based on capabilities
  */
 
-import type { Task, TaskStatus } from './Task.js';
+import type { Task } from './Task.js';
 import { isTaskAvailable, assignTask, TaskStatus as TaskStatusEnum } from './Task.js';
 import type { Agent } from '../agents/Agent.js';
 import { isAgentAvailable } from '../agents/Agent.js';
@@ -192,7 +192,7 @@ export class TaskQueue {
   /**
    * Check if task is suitable for agent (based on capabilities)
    */
-  private isTaskSuitableForAgent(task: Task, agent: Agent): boolean {
+  private isTaskSuitableForAgent(_task: Task, _agent: Agent): boolean {
     // Basic suitability check
     // Can be extended with more sophisticated matching logic
 
@@ -477,7 +477,7 @@ export class TaskQueue {
         this.complete(taskId);
       }
 
-      this.logger.warn('Task failed', { taskId, agentId: agent.id, error, retryable });
+      this.logger.warn('Task failed', { taskId, agentId: agent.id, error: new Error(error), retryable });
     }
   }
 }

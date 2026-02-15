@@ -20,6 +20,8 @@ import {
   ConnectionStateHandler,
 } from './Channel.js';
 import { Message } from '../../protocol/Message.js';
+import type { Logger } from '../../logging/Logger.js';
+import { createLogger } from '../../logging/Logger.js';
 
 /**
  * Abstract base class for channel implementations
@@ -28,6 +30,7 @@ export abstract class ChannelAdapter implements Channel {
   public readonly id: string;
   public readonly type: string;
   protected config: ChannelConfig;
+  protected logger: Logger;
   protected _status: ConnectionStatus;
   protected stats: ChannelStats;
   protected messageHandlers: Set<MessageHandler>;
@@ -42,6 +45,7 @@ export abstract class ChannelAdapter implements Channel {
     this.id = uuidv4();
     this.type = config.type;
     this.config = config;
+    this.logger = createLogger();
     this._status = ConnectionStatus.DISCONNECTED;
     this.reconnectAttempts = 0;
     this.messageHandlers = new Set();

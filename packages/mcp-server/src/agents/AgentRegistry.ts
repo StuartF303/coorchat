@@ -3,8 +3,9 @@
  * Maintains a registry of all agents participating in the coordination system
  */
 
-import type { Agent, AgentStatus, AgentQuery, AgentUpdate } from './Agent.js';
+import type { Agent, AgentQuery, AgentUpdate } from './Agent.js';
 import {
+  AgentStatus,
   matchesAgentQuery,
   isAgentActive,
   updateAgent,
@@ -243,7 +244,7 @@ export class AgentRegistry {
 
     for (const agent of this.agents.values()) {
       const timeSinceLastSeen = now - agent.lastSeenAt.getTime();
-      if (timeSinceLastSeen > this.timeoutMs && agent.status !== 'disconnected') {
+      if (timeSinceLastSeen > this.timeoutMs && agent.status !== AgentStatus.DISCONNECTED) {
         timedOutAgents.push(agent);
       }
     }
@@ -257,7 +258,7 @@ export class AgentRegistry {
       });
 
       // Update status to disconnected
-      await this.update(agent.id, { status: 'disconnected' });
+      await this.update(agent.id, { status: AgentStatus.DISCONNECTED });
 
       // Notify handlers
       await this.notifyHandlers({
@@ -315,8 +316,8 @@ export class AgentRegistry {
   } {
     const all = this.getAll();
     const active = this.getActive();
-    const connected = this.getByStatus('connected');
-    const disconnected = this.getByStatus('disconnected');
+    const connected = this.getByStatus(AgentStatus.CONNECTED);
+    const disconnected = this.getByStatus(AgentStatus.DISCONNECTED);
 
     // Count by role
     const byRole: Record<string, number> = {};

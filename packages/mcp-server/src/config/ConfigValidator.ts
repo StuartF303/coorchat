@@ -152,17 +152,17 @@ export const AppConfigSchema = z.object({
 /**
  * Type exports
  */
-export type RetryConfig = z.infer<typeof RetryConfigSchema>;
-export type HeartbeatConfig = z.infer<typeof HeartbeatConfigSchema>;
-export type DiscordConfig = z.infer<typeof DiscordConfigSchema>;
-export type SignalRConfig = z.infer<typeof SignalRConfigSchema>;
-export type RedisConfig = z.infer<typeof RedisConfigSchema>;
-export type RelayConfig = z.infer<typeof RelayConfigSchema>;
-export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
-export type GitHubConfig = z.infer<typeof GitHubConfigSchema>;
-export type AgentConfig = z.infer<typeof AgentConfigSchema>;
-export type LoggingConfig = z.infer<typeof LoggingConfigSchema>;
-export type AppConfig = z.infer<typeof AppConfigSchema>;
+export type RetryConfig = z.output<typeof RetryConfigSchema>;
+export type HeartbeatConfig = z.output<typeof HeartbeatConfigSchema>;
+export type DiscordConfig = z.output<typeof DiscordConfigSchema>;
+export type SignalRConfig = z.output<typeof SignalRConfigSchema>;
+export type RedisConfig = z.output<typeof RedisConfigSchema>;
+export type RelayConfig = z.output<typeof RelayConfigSchema>;
+export type ChannelConfig = z.output<typeof ChannelConfigSchema>;
+export type GitHubConfig = z.output<typeof GitHubConfigSchema>;
+export type AgentConfig = z.output<typeof AgentConfigSchema>;
+export type LoggingConfig = z.output<typeof LoggingConfigSchema>;
+export type AppConfig = z.output<typeof AppConfigSchema>;
 
 /**
  * Validation result
@@ -207,28 +207,28 @@ export class ConfigValidator {
    * Validate application configuration
    */
   validateAppConfig(data: unknown): ValidationResult<AppConfig> {
-    return this.validate(AppConfigSchema, data);
+    return this.validate(AppConfigSchema, data) as ValidationResult<AppConfig>;
   }
 
   /**
    * Validate channel configuration
    */
   validateChannelConfig(data: unknown): ValidationResult<ChannelConfig> {
-    return this.validate(ChannelConfigSchema, data);
+    return this.validate(ChannelConfigSchema, data) as ValidationResult<ChannelConfig>;
   }
 
   /**
    * Validate GitHub configuration
    */
   validateGitHubConfig(data: unknown): ValidationResult<GitHubConfig> {
-    return this.validate(GitHubConfigSchema, data);
+    return this.validate(GitHubConfigSchema, data) as ValidationResult<GitHubConfig>;
   }
 
   /**
    * Validate agent configuration
    */
   validateAgentConfig(data: unknown): ValidationResult<AgentConfig> {
-    return this.validate(AgentConfigSchema, data);
+    return this.validate(AgentConfigSchema, data) as ValidationResult<AgentConfig>;
   }
 
   /**
@@ -258,12 +258,12 @@ export const validator = new ConfigValidator();
  * Convenience function to validate app configuration
  */
 export function validateAppConfig(data: unknown): AppConfig {
-  return validator.validateOrThrow(AppConfigSchema, data);
+  return validator.validateOrThrow(AppConfigSchema, data) as AppConfig;
 }
 
 /**
  * Convenience function to validate channel configuration
  */
 export function validateChannelConfig(data: unknown): ChannelConfig {
-  return validator.validateOrThrow(ChannelConfigSchema, data);
+  return validator.validateOrThrow(ChannelConfigSchema, data) as ChannelConfig;
 }

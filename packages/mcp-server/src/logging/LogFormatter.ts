@@ -190,7 +190,7 @@ export class LogFormatter {
   private getReplacer(): (key: string, value: unknown) => unknown {
     const seen = new WeakSet();
 
-    return (key: string, value: unknown) => {
+    return (_key: string, value: unknown) => {
       // Handle circular references
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {
