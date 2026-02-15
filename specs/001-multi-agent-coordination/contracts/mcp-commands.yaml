@@ -1,0 +1,291 @@
+# MCP Commands Specification
+# CoorChat Multi-Agent Coordination System
+
+version: "1.0"
+description: "MCP command interface for configuring and managing the CoorChat coordination system"
+
+commands:
+  configure:
+    description: "Initialize or update channel configuration"
+    usage: "/coorchat configure [--channel-type <type>] [--retention <days>]"
+    parameters:
+      - name: channel-type
+        type: enum
+        required: false
+        values: [discord, signalr, redis, relay]
+        description: "Channel type to configure (prompts if not provided)"
+
+      - name: retention
+        type: integer
+        required: false
+        default: 30
+        description: "Message history retention in days"
+
+      - name: config-file
+        type: string
+        required: false
+        default: ".coorchat/config.json"
+        description: "Path to configuration file"
+
+    interactive: true
+    prompts:
+      - step: 1
+        message: "Select channel type:"
+        options:
+          - value: discord
+            label: "Discord"
+            description: "Use Discord for coordination (requires bot token)"
+          - value: signalr
+            label: "SignalR"
+            description: "Use SignalR hub (requires hub URL)"
+          - value: redis
+            label: "Redis"
+            description: "Use Redis pub/sub (requires Redis connection)"
+          - value: relay
+            label: "CoorChat Relay Server"
+            description: "Use self-hosted relay server"
+
+      - step: 2
+        message: "Enter channel connection details:"
+        conditional: true
+        fields:
+          discord:
+            - name: bot-token
+              prompt: "Discord Bot Token"
+              env-var: "DISCORD_BOT_TOKEN"
+              secret: true
+            - name: guild-id
+              prompt: "Discord Guild (Server) ID"
+            - name: channel-id
+              prompt: "Discord Channel ID"
+
+          signalr:
+            - name: hub-url
+              prompt: "SignalR Hub URL"
+              example: "https://your-server.com/agenthub"
+            - name: access-token
+              prompt: "Access Token"
+              env-var: "SIGNALR_TOKEN"
+              secret: true
+
+          redis:
+            - name: host
+              prompt: "Redis Host"
+              default: "localhost"
+            - name: port
+              prompt: "Redis Port"
+              default: 6379
+            - name: password
+              prompt: "Redis Password (optional)"
+              env-var: "REDIS_PASSWORD"
+              secret: true
+              optional: true
+            - name: channel-name
+              prompt: "Redis Pub/Sub Channel Name"
+              default: "coorchat"
+
+          relay:
+            - name: server-url
+              prompt: "Relay Server URL"
+              example: "https://relay.coorchat.dev"
+            - name: channel-id
+              prompt: "Channel ID"
+            - name: access-token
+              prompt: "Access Token"
+              env-var: "RELAY_TOKEN"
+              secret: true
+
+      - step: 3
+        message: "Enter GitHub repository details:"
+        fields:
+          - name: github-token
+            prompt: "GitHub Personal Access Token"
+            env-var: "GITHUB_TOKEN"
+            secret: true
+          - name: repository-url
+            prompt: "Repository URL"
+            example: "https://github.com/owner/repo"
+          - name: webhook-secret
+            prompt: "Webhook Secret (optional, for webhook mode)"
+            env-var: "GITHUB_WEBHOOK_SECRET"
+            secret: true
+            optional: true
+
+      - step: 4
+        message: "Configure retention and logging:"
+        fields:
+          - name: retention-days
+            prompt: "Message retention (days)"
+            default: 30
+          - name: log-level
+            prompt: "Log level"
+            options: [ERROR, WARN, INFO, DEBUG]
+            default: INFO
+
+    output:
+      success: |
+        ✅ Configuration saved to {config-file}
+
+        Channel: {channel-type}
+        Retention: {retention-days} days
+        Log Level: {log-level}
+
+        Next: Run `/coorchat join` to connect an agent
+
+      error: |
+        ❌ Configuration failed: {error-message}
+
+  join:
+    description: "Join an agent to the coordination channel"
+    usage: "/coorchat join [--role <role>] [--agent-id <id>]"
+    parameters:
+      - name: role
+        type: string
+        required: false
+        description: "Agent role type (prompts if not provided)"
+
+      - name: agent-id
+        type: uuid
+        required: false
+        description: "Agent UUID (generates if not provided)"
+
+      - name: capabilities
+        type: string
+        required: false
+        description: "Path to capabilities JSON file"
+
+    interactive: true
+    prompts:
+      - step: 1
+        message: "Select agent role:"
+        options:
+          - value: developer
+            label: "Developer"
+          - value: tester
+            label: "Tester"
+          - value: architect
+            label: "Architect"
+          - value: frontend
+            label: "Frontend Developer"
+          - value: backend
+            label: "Backend Developer"
+          - value: infrastructure
+            label: "Infrastructure Engineer"
+          - value: custom
+            label: "Custom Role"
+            prompt-for-value: true
+
+      - step: 2
+        message: "Agent capabilities will be auto-detected. Override?"
+        fields:
+          - name: override-capabilities
+            prompt: "Provide custom capabilities file path (or press Enter to skip)"
+            optional: true
+
+    output:
+      success: |
+        ✅ Agent joined successfully
+
+        Agent ID: {agent-id}
+        Role: {role}
+        Platform: {detected-platform}
+        Environment: {detected-environment}
+
+        Connected to: {channel-type} channel
+        Status: Connected
+
+      error: |
+        ❌ Failed to join channel: {error-message}
+
+  status:
+    description: "Display current coordination channel status"
+    usage: "/coorchat status [--verbose]"
+    parameters:
+      - name: verbose
+        type: boolean
+        required: false
+        default: false
+        description: "Show detailed information"
+
+    output:
+      format: "text-ui"
+      template: |
+        ┌─ CoorChat Status ──────────────────────────┐
+        │ Channel: {channel-type}/{channel-name}     │
+        │ Connected Agents: {agent-count}            │
+        ├────────────────────────────────────────────┤
+        │ ● {agent-1-role}  [{platform-1}]  Task#{n}│
+        │ ● {agent-2-role}  [{platform-2}]  Idle    │
+        │ ○ {agent-3-role}  [{platform-3}]  Offline │
+        │ ...                                        │
+        ├────────────────────────────────────────────┤
+        │ Active Tasks: {active-task-count}          │
+        │ Messages Today: {message-count}            │
+        │ Uptime: {uptime}                           │
+        └────────────────────────────────────────────┘
+
+  capabilities:
+    description: "List capabilities of connected agents"
+    usage: "/coorchat capabilities [--agent-id <id>]"
+    parameters:
+      - name: agent-id
+        type: uuid
+        required: false
+        description: "Show capabilities for specific agent (shows all if omitted)"
+
+    output:
+      format: "table"
+      template: |
+        Agent Capabilities:
+
+        ┌──────────────┬──────────────┬──────────┬─────────────────┐
+        │ Agent ID     │ Role         │ Platform │ Tools           │
+        ├──────────────┼──────────────┼──────────┼─────────────────┤
+        │ 550e8400-... │ developer    │ Linux    │ git, npm, docker│
+        │ 6ba7b810-... │ tester       │ Windows  │ jest, playwright│
+        │ ...          │ ...          │ ...      │ ...             │
+        └──────────────┴──────────────┴──────────┴─────────────────┘
+
+  disconnect:
+    description: "Disconnect current agent from the channel"
+    usage: "/coorchat disconnect [--graceful]"
+    parameters:
+      - name: graceful
+        type: boolean
+        required: false
+        default: true
+        description: "Wait for pending tasks to complete"
+
+    output:
+      success: |
+        ✅ Agent disconnected successfully
+
+        Session Duration: {session-duration}
+        Tasks Completed: {tasks-completed}
+        Messages Sent: {messages-sent}
+
+      error: |
+        ❌ Disconnect failed: {error-message}
+
+errors:
+  ERR_NO_CONFIG:
+    code: "ERR_NO_CONFIG"
+    message: "No configuration found. Run `/coorchat configure` first."
+
+  ERR_INVALID_TOKEN:
+    code: "ERR_INVALID_TOKEN"
+    message: "Invalid authentication token. Check your configuration."
+
+  ERR_CHANNEL_UNAVAILABLE:
+    code: "ERR_CHANNEL_UNAVAILABLE"
+    message: "Cannot connect to channel. Verify channel is accessible."
+
+  ERR_DUPLICATE_AGENT:
+    code: "ERR_DUPLICATE_AGENT"
+    message: "Agent with this ID is already connected."
+
+visual_feedback:
+  loading_spinner: true
+  progress_bars: true
+  color_support: auto # auto-detect terminal color support
+  unicode_support: auto # auto-detect terminal unicode support
