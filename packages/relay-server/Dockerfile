@@ -37,11 +37,15 @@ USER coorchat
 COPY --from=build /app/publish .
 
 # Expose ports
-EXPOSE 80
-EXPOSE 443
+EXPOSE 5000
+EXPOSE 5001
+
+# Environment variables
+ENV ASPNETCORE_URLS=https://+:5001;http://+:5000
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
 
 ENTRYPOINT ["dotnet", "CoorChat.RelayServer.Api.dll"]
