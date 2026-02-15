@@ -9,6 +9,14 @@ import { TokenGenerator } from '../config/TokenGenerator.js';
 import { ChannelFactory } from '../channels/base/ChannelFactory.js';
 import { RoleManager } from '../agents/RoleManager.js';
 import type { ChannelConfig } from '../channels/base/Channel.js';
+import { SlackChannel } from '../channels/slack/SlackChannel.js';
+import { CommandHandler } from './CommandHandler.js';
+
+// Import channel implementations for side-effect registration
+import '../channels/slack/SlackChannel.js';
+import '../channels/discord/DiscordChannel.js';
+import '../channels/signalr/SignalRChannel.js';
+import '../channels/redis/RedisChannel.js';
 
 // Load environment variables
 dotenv.config();
@@ -134,13 +142,23 @@ agentCmd
 
       console.log('✅ Connected to channel');
 
-      // Listen for messages
+      // Listen for protocol messages
       channel.onMessage((message) => {
         console.log(`📨 [${message.messageType}] from ${message.senderId}`);
         if (message.payload) {
           console.log(`   ${JSON.stringify(message.payload, null, 2)}`);
         }
       });
+
+      // Set up text command handling for Slack channels
+      if (channel instanceof SlackChannel) {
+        const commandHandler = new CommandHandler(
+          { id: agentId, role, channelType: options.channel },
+          (text) => (channel as SlackChannel).sendText(text),
+        );
+        channel.onTextMessage((text, userId) => commandHandler.handle(text, userId));
+        await channel.sendText(`Agent \`${agentId}\` (${role}) is online`);
+      }
 
       // Keep alive
       console.log('');

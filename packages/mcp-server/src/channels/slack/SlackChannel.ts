@@ -11,6 +11,11 @@ import type { Message } from '../../protocol/Message.js';
 import { validator } from '../../protocol/MessageValidator.js';
 
 /**
+ * Handler for plain text (non-protocol) messages
+ */
+export type TextMessageHandler = (text: string, userId: string) => void | Promise<void>;
+
+/**
  * Slack-specific configuration
  */
 export interface SlackConfig {
@@ -28,6 +33,7 @@ export class SlackChannel extends ChannelAdapter {
   private socketClient: SocketModeClient;
   private slackConfig: SlackConfig;
   private botUserId?: string;
+  private textMessageHandlers: Set<TextMessageHandler> = new Set();
 
   constructor(config: ChannelConfig) {
     super(config);
@@ -94,11 +100,33 @@ export class SlackChannel extends ChannelAdapter {
       }
 
       this.handleMessage(parsedMessage as Message);
-    } catch (error) {
-      this.logger.debug('Failed to parse message as protocol message', {
-        text: event.text,
-      });
+    } catch {
+      // Not a protocol message — dispatch to text message handlers
+      const text = (event.text || '').trim();
+      if (text && this.textMessageHandlers.size > 0) {
+        this.textMessageHandlers.forEach((handler) => {
+          this.safeCall(handler, text, event.user);
+        });
+      }
     }
+  }
+
+  /**
+   * Register a handler for plain text (non-protocol) messages
+   */
+  onTextMessage(handler: TextMessageHandler): () => void {
+    this.textMessageHandlers.add(handler);
+    return () => this.textMessageHandlers.delete(handler);
+  }
+
+  /**
+   * Send a plain text message to the Slack channel
+   */
+  async sendText(text: string): Promise<void> {
+    await this.webClient.chat.postMessage({
+      channel: this.slackConfig.channelId,
+      text,
+    });
   }
 
   /**
