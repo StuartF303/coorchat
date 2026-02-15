@@ -22,32 +22,43 @@ This is a monorepo containing two components:
 - **MCP Server** (`packages/mcp-server/`): TypeScript/Node.js coordination client
 - **Relay Server** (`packages/relay-server/`): C#/.NET optional self-hosted relay (coming soon)
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+**Choose your path**:
 
-- Node.js 18+
-- Docker (optional but recommended)
-- GitHub Personal Access Token
-- One of: Discord Bot Token, SignalR Hub, Redis Instance, or Relay Server
-
-### Installation
+### Option 1: Automated Setup (Recommended)
 
 ```bash
-# Clone repository
-git clone https://github.com/yourorg/coorchat.git
-cd coorchat
+# Linux/macOS
+./quick-start.sh
 
-# Install dependencies (MCP Server)
+# Windows (PowerShell)
+.\quick-start.ps1
+```
+
+This will:
+- ✅ Install dependencies
+- ✅ Generate secure tokens
+- ✅ Set up your chosen channel (Redis/Discord/SignalR)
+- ✅ Run tests
+- ✅ Generate Claude Desktop configuration
+
+### Option 2: Manual Installation
+
+See **[INSTALL.md](./INSTALL.md)** for complete installation guide.
+
+```bash
 cd packages/mcp-server
-npm install
+npm install && npm run build
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your tokens and configuration
+# Generate token
+npm run cli -- token generate
 
-# Run locally
-npm run dev
+# Start Redis
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Configure and start
+npm run cli -- agent start --role developer
 
 # Or using Docker
 docker-compose up
@@ -104,6 +115,20 @@ coorchat/
 ├── .github/                 # CI/CD workflows
 └── docker-compose.yml       # Local development setup
 ```
+
+## 📚 Documentation
+
+- **[INSTALL.md](./INSTALL.md)** - Complete installation guide with all channel options
+- **[CLI.md](./packages/mcp-server/CLI.md)** - CLI command reference and usage examples
+- **[SCENARIOS.md](./SCENARIOS.md)** - Real-world coordination scenarios and examples
+- **[Specifications](./specs/001-multi-agent-coordination/)** - Feature specs, design docs, and task breakdown
+
+### Quick Links
+
+- [Token Management](./packages/mcp-server/CLI.md#token-management) - Generate and validate tokens
+- [Agent Commands](./packages/mcp-server/CLI.md#agent-management) - Start and manage agents
+- [Monitoring](./packages/mcp-server/CLI.md#monitoring) - Watch coordination in real-time
+- [Example Scenarios](./SCENARIOS.md) - Feature development, bug fixes, code reviews, deployments
 
 ## Contributing
 

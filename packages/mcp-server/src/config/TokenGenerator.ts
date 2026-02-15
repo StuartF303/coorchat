@@ -104,6 +104,11 @@ export class TokenGenerator {
   } = {}): boolean {
     const { minLength = 16, prefix } = options;
 
+    // Check for null/undefined
+    if (!token) {
+      return false;
+    }
+
     // Check minimum length
     if (token.length < minLength) {
       return false;
