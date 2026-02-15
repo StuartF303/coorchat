@@ -52,7 +52,36 @@ export class SlackChannel extends ChannelAdapter {
    * Setup Slack Socket Mode event handlers
    */
   private setupEventHandlers(): void {
+    // Handle all events_api envelopes (this is how Socket Mode delivers events)
+    this.socketClient.on('events_api', async ({ event, body, ack }) => {
+      console.log('🔔 Events API envelope received:', {
+        eventType: event?.type,
+        subtype: event?.subtype,
+        channel: event?.channel,
+        user: event?.user,
+        text: event?.text?.substring(0, 50)
+      });
+
+      await ack();
+
+      // Handle message events
+      if (event?.type === 'message') {
+        this.handleSlackMessage(event).catch((error) => {
+          this.handleError(
+            error instanceof Error ? error : new Error(String(error))
+          );
+        });
+      }
+    });
+
+    // Keep old message handler for backward compatibility
     this.socketClient.on('message', async ({ event, ack }) => {
+      console.log('📬 Legacy message event:', {
+        type: event?.type,
+        channel: event?.channel,
+        user: event?.user,
+        text: event?.text?.substring(0, 50)
+      });
       await ack();
       this.handleSlackMessage(event).catch((error) => {
         this.handleError(
@@ -62,6 +91,7 @@ export class SlackChannel extends ChannelAdapter {
     });
 
     this.socketClient.on('error', (error) => {
+      console.error('❌ Socket error:', error);
       this.handleError(
         error instanceof Error ? error : new Error(String(error))
       );
