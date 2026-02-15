@@ -63,6 +63,16 @@ export const RelayConfigSchema = z.object({
 });
 
 /**
+ * Slack channel configuration schema
+ */
+export const SlackConfigSchema = z.object({
+  botToken: z.string().min(1),
+  appToken: z.string().min(1),
+  channelId: z.string().min(1),
+  teamId: z.string().optional(),
+});
+
+/**
  * Channel configuration schema (discriminated union)
  */
 export const ChannelConfigSchema = z.discriminatedUnion('type', [
@@ -91,6 +101,13 @@ export const ChannelConfigSchema = z.discriminatedUnion('type', [
     type: z.literal('relay'),
     token: z.string().min(1),
     connectionParams: RelayConfigSchema,
+    retry: RetryConfigSchema.optional(),
+    heartbeat: HeartbeatConfigSchema.optional(),
+  }),
+  z.object({
+    type: z.literal('slack'),
+    token: z.string().min(1),
+    connectionParams: SlackConfigSchema,
     retry: RetryConfigSchema.optional(),
     heartbeat: HeartbeatConfigSchema.optional(),
   }),
@@ -158,6 +175,7 @@ export type DiscordConfig = z.output<typeof DiscordConfigSchema>;
 export type SignalRConfig = z.output<typeof SignalRConfigSchema>;
 export type RedisConfig = z.output<typeof RedisConfigSchema>;
 export type RelayConfig = z.output<typeof RelayConfigSchema>;
+export type SlackConfig = z.output<typeof SlackConfigSchema>;
 export type ChannelConfig = z.output<typeof ChannelConfigSchema>;
 export type GitHubConfig = z.output<typeof GitHubConfigSchema>;
 export type AgentConfig = z.output<typeof AgentConfigSchema>;

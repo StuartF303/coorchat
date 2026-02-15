@@ -166,7 +166,7 @@ export class ChannelFactory {
    * @param overrides - Optional configuration overrides
    */
   static createConfig(
-    type: 'discord' | 'signalr' | 'redis' | 'relay',
+    type: 'discord' | 'signalr' | 'redis' | 'relay' | 'slack',
     token: string,
     connectionParams: Record<string, unknown>,
     overrides?: Partial<ChannelConfig>

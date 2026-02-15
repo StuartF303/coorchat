@@ -22,7 +22,7 @@ export enum ConnectionStatus {
  */
 export interface ChannelConfig {
   /** Channel type identifier */
-  type: 'discord' | 'signalr' | 'redis' | 'relay';
+  type: 'discord' | 'signalr' | 'redis' | 'relay' | 'slack';
 
   /** Authentication token */
   token: string;

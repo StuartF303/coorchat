@@ -241,6 +241,12 @@ configCmd
     } else if (process.env.CHANNEL_TYPE === 'signalr') {
       console.log('SignalR Configuration:');
       console.log(`  Hub URL: ${process.env.SIGNALR_HUB_URL || '(not set)'}`);
+    } else if (process.env.CHANNEL_TYPE === 'slack') {
+      console.log('Slack Configuration:');
+      console.log(`  Bot Token: ${process.env.SLACK_BOT_TOKEN ? '***' : '(not set)'}`);
+      console.log(`  App Token: ${process.env.SLACK_APP_TOKEN ? '***' : '(not set)'}`);
+      console.log(`  Channel ID: ${process.env.SLACK_CHANNEL_ID || '(not set)'}`);
+      console.log(`  Team ID: ${process.env.SLACK_TEAM_ID || '(not set)'}`);
     }
 
     console.log('');
@@ -257,7 +263,7 @@ configCmd
 configCmd
   .command('init')
   .description('Initialize configuration file')
-  .option('-c, --channel <type>', 'Channel type (redis, discord, signalr)', 'redis')
+  .option('-c, --channel <type>', 'Channel type (redis, discord, signalr, slack)', 'redis')
   .action((options) => {
     const token = TokenGenerator.generateChannelToken();
 
@@ -275,6 +281,10 @@ REDIS_TLS=false` : ''}
 ${options.channel === 'discord' ? `DISCORD_BOT_TOKEN=your_bot_token_here
 DISCORD_CHANNEL_ID=your_channel_id_here` : ''}
 ${options.channel === 'signalr' ? `SIGNALR_HUB_URL=https://localhost:5001/agentHub` : ''}
+${options.channel === 'slack' ? `SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_APP_TOKEN=xapp-your-app-token
+SLACK_CHANNEL_ID=C0123456789
+# SLACK_TEAM_ID=T0123456789` : ''}
 
 # Agent configuration
 AGENT_ID=agent-${Date.now()}
@@ -361,6 +371,13 @@ function getConnectionParams(channelType: string): any {
     case 'signalr':
       return {
         hubUrl: process.env.SIGNALR_HUB_URL || 'https://localhost:5001/agentHub',
+      };
+    case 'slack':
+      return {
+        botToken: process.env.SLACK_BOT_TOKEN,
+        appToken: process.env.SLACK_APP_TOKEN,
+        channelId: process.env.SLACK_CHANNEL_ID,
+        teamId: process.env.SLACK_TEAM_ID,
       };
     default:
       return {};

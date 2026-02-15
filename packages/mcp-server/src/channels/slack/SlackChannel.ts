@@ -1,0 +1,226 @@
+/**
+ * SlackChannel - Slack Socket Mode implementation of Channel interface
+ * Provides Slack-based communication for agent coordination
+ */
+
+import { WebClient } from '@slack/web-api';
+import { SocketModeClient } from '@slack/socket-mode';
+import { ChannelAdapter } from '../base/ChannelAdapter.js';
+import type { ChannelConfig } from '../base/Channel.js';
+import type { Message } from '../../protocol/Message.js';
+import { validator } from '../../protocol/MessageValidator.js';
+
+/**
+ * Slack-specific configuration
+ */
+export interface SlackConfig {
+  botToken: string;
+  appToken: string;
+  channelId: string;
+  teamId?: string;
+}
+
+/**
+ * SlackChannel implementation
+ */
+export class SlackChannel extends ChannelAdapter {
+  private webClient: WebClient;
+  private socketClient: SocketModeClient;
+  private slackConfig: SlackConfig;
+  private botUserId?: string;
+
+  constructor(config: ChannelConfig) {
+    super(config);
+
+    this.slackConfig = config.connectionParams as unknown as SlackConfig;
+
+    this.webClient = new WebClient(this.slackConfig.botToken);
+    this.socketClient = new SocketModeClient({
+      appToken: this.slackConfig.appToken,
+    });
+
+    this.setupEventHandlers();
+  }
+
+  /**
+   * Setup Slack Socket Mode event handlers
+   */
+  private setupEventHandlers(): void {
+    this.socketClient.on('message', async ({ event, ack }) => {
+      await ack();
+      this.handleSlackMessage(event).catch((error) => {
+        this.handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
+      });
+    });
+
+    this.socketClient.on('error', (error) => {
+      this.handleError(
+        error instanceof Error ? error : new Error(String(error))
+      );
+    });
+  }
+
+  /**
+   * Handle incoming Slack message
+   */
+  private async handleSlackMessage(event: any): Promise<void> {
+    // Only process messages from our channel
+    if (event.channel !== this.slackConfig.channelId) {
+      return;
+    }
+
+    // Ignore bot's own messages
+    if (event.user === this.botUserId) {
+      return;
+    }
+
+    // Ignore message subtypes (edits, joins, etc.)
+    if (event.subtype) {
+      return;
+    }
+
+    try {
+      const content = event.text;
+      const parsedMessage = JSON.parse(content);
+
+      const validationResult = validator.validateFull(parsedMessage);
+      if (!validationResult.valid) {
+        this.logger.warn('Invalid message received', {
+          errors: validator.getErrorSummary(validationResult),
+        });
+        return;
+      }
+
+      this.handleMessage(parsedMessage as Message);
+    } catch (error) {
+      this.logger.debug('Failed to parse message as protocol message', {
+        text: event.text,
+      });
+    }
+  }
+
+  /**
+   * Get authentication token for Slack connection
+   */
+  protected getAuthToken(): string {
+    return this.slackConfig.botToken;
+  }
+
+  /**
+   * Connect to Slack
+   */
+  protected async doConnect(): Promise<void> {
+    // Verify bot token by calling auth.test
+    const authResult = await this.webClient.auth.test();
+    this.botUserId = authResult.user_id;
+
+    this.logger.info('Slack bot authenticated', {
+      botUserId: this.botUserId,
+      team: authResult.team,
+    });
+
+    // Verify channel access
+    try {
+      await this.webClient.conversations.info({
+        channel: this.slackConfig.channelId,
+      });
+    } catch (error) {
+      throw new Error(
+        `Cannot access Slack channel ${this.slackConfig.channelId}. ` +
+        `Ensure the bot is invited to the channel.`
+      );
+    }
+
+    // Start socket mode client for real-time events
+    await this.socketClient.start();
+
+    this.logger.info('Connected to Slack channel', {
+      channelId: this.slackConfig.channelId,
+      teamId: this.slackConfig.teamId,
+    });
+  }
+
+  /**
+   * Disconnect from Slack
+   */
+  protected async doDisconnect(): Promise<void> {
+    await this.socketClient.disconnect();
+    this.botUserId = undefined;
+  }
+
+  /**
+   * Send message to Slack
+   */
+  protected async doSendMessage(message: Message): Promise<void> {
+    const content = JSON.stringify(message);
+
+    // Slack has a 40,000 character limit for message text
+    if (content.length > 40000) {
+      throw new Error(`Message too long: ${content.length} characters (max 40000)`);
+    }
+
+    await this.webClient.chat.postMessage({
+      channel: this.slackConfig.channelId,
+      text: content,
+    });
+  }
+
+  /**
+   * Ping Slack
+   */
+  protected async doPing(): Promise<void> {
+    const result = await this.webClient.auth.test();
+    if (!result.ok) {
+      throw new Error('Slack auth.test failed');
+    }
+  }
+
+  /**
+   * Get message history from Slack
+   */
+  async getHistory(limit: number = 50, before?: Date): Promise<Message[]> {
+    try {
+      const options: any = {
+        channel: this.slackConfig.channelId,
+        limit,
+      };
+
+      if (before) {
+        // Slack uses Unix timestamps with microsecond precision
+        options.latest = String(before.getTime() / 1000);
+      }
+
+      const result = await this.webClient.conversations.history(options);
+      const parsedMessages: Message[] = [];
+
+      if (result.messages) {
+        for (const slackMessage of result.messages) {
+          if (slackMessage.text) {
+            try {
+              const parsed = JSON.parse(slackMessage.text);
+              const validationResult = validator.validate(parsed);
+              if (validationResult.valid) {
+                parsedMessages.push(parsed as Message);
+              }
+            } catch {
+              // Skip non-JSON messages
+            }
+          }
+        }
+      }
+
+      return parsedMessages;
+    } catch (error) {
+      this.logger.error('Failed to fetch message history', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return [];
+    }
+  }
+}
+
+// Register with factory
+import { ChannelFactory } from '../base/ChannelFactory.js';
+ChannelFactory.register('slack', SlackChannel);
