@@ -52,24 +52,47 @@ export class SlackFormatter {
   }
 
   /**
-   * Send a table using Block Kit Table blocks
+   * Send a table using monospace code block with aligned columns
    * @param headers Column headers
    * @param rows Data rows (each row is an array of strings)
    * @param title Optional table title
    */
   async sendTable(headers: string[], rows: string[][], title?: string): Promise<void> {
-    // For now, use markdown table format
-    // TODO: Implement Block Kit Table when @slack/web-api is integrated
-    let table = title ? `**${title}**\n\n` : '';
+    // Calculate column widths (minimum 3 chars, add padding)
+    const columnWidths = headers.map((header, i) => {
+      const maxDataWidth = rows.reduce((max, row) => Math.max(max, (row[i] || '').length), 0);
+      return Math.max(header.length, maxDataWidth) + 2; // Add 2 for padding
+    });
 
-    // Create header
-    table += `| ${headers.join(' | ')} |\n`;
-    table += `| ${headers.map(() => '---').join(' | ')} |\n`;
+    // Helper to pad a cell
+    const padCell = (text: string, width: number): string => {
+      return text.padEnd(width, ' ');
+    };
 
-    // Add rows
-    for (const row of rows) {
-      table += `| ${row.join(' | ')} |\n`;
+    // Build table in code block for monospace alignment
+    let table = '';
+
+    if (title) {
+      table += `*${title}*\n\n`;
     }
+
+    table += '```\n';
+
+    // Header row
+    const headerRow = headers.map((h, i) => padCell(h, columnWidths[i])).join(' ');
+    table += headerRow + '\n';
+
+    // Separator row
+    const separator = columnWidths.map(w => '─'.repeat(w)).join(' ');
+    table += separator + '\n';
+
+    // Data rows
+    for (const row of rows) {
+      const dataRow = row.map((cell, i) => padCell(cell, columnWidths[i])).join(' ');
+      table += dataRow + '\n';
+    }
+
+    table += '```';
 
     await this.channel.sendText(table);
   }

@@ -203,9 +203,13 @@ describe('DiscoveryCommands', () => {
     it('should include capabilities', async () => {
       const agent = createMockAgent('T1', 'developer');
       agent.capabilities = {
-        canExecuteCode: true,
-        canReadFiles: true,
-        canWriteFiles: false,
+        agentId: 'T1',
+        roleType: 'developer',
+        platform: 'Linux',
+        environmentType: 'local',
+        tools: ['node', 'git', 'docker'],
+        languages: ['typescript', 'javascript', 'python'],
+        apiAccess: ['github', 'slack'],
       };
       await mockRegistry.add(agent);
 
@@ -213,9 +217,12 @@ describe('DiscoveryCommands', () => {
 
       const response = mockChannel.sendText.mock.calls[0][0];
 
-      expect(response).toContain('Execute Code');
-      expect(response).toContain('Read Files');
-      expect(response).toContain('Write Files');
+      expect(response).toContain('Tools');
+      expect(response).toContain('node');
+      expect(response).toContain('Languages');
+      expect(response).toContain('typescript');
+      expect(response).toContain('API Access');
+      expect(response).toContain('github');
     });
 
     it('should include current task if assigned', async () => {
