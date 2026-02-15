@@ -12,6 +12,7 @@ export enum AgentStatus {
   DISCONNECTED = 'disconnected',
   CONNECTING = 'connecting',
   CONNECTED = 'connected',
+  PAUSED = 'paused',
 }
 
 /**

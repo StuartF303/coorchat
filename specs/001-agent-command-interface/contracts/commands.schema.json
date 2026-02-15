@@ -1,0 +1,686 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CoorChat Command Interface Schema",
+  "description": "Defines all commands, their syntax, parameters, and validation rules for the agent command interface",
+  "version": "1.0.0",
+  "commands": {
+    "discovery": {
+      "list_agents": {
+        "aliases": ["show agents", "ls agents"],
+        "description": "List all connected agents with their status",
+        "syntax": "list agents",
+        "minArgs": 0,
+        "maxArgs": 0,
+        "parameters": {},
+        "examples": [
+          "list agents",
+          "show agents"
+        ],
+        "response": {
+          "format": "table",
+          "columns": ["Agent ID", "Role", "Status", "Model"]
+        }
+      },
+      "status": {
+        "aliases": [],
+        "description": "Show pool overview or detailed agent status",
+        "syntax": "status [<agent-id>]",
+        "minArgs": 0,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": false,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Agent ID to query (omit for pool overview)"
+          }
+        },
+        "examples": [
+          "status",
+          "status T14"
+        ],
+        "response": {
+          "format": "sections",
+          "fields": ["Total Agents", "Idle Count", "Busy Count", "Pending Tasks"]
+        }
+      },
+      "ping_all": {
+        "aliases": ["ping all"],
+        "description": "Health check for all connected agents",
+        "syntax": "ping all",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {},
+        "examples": [
+          "ping all"
+        ],
+        "response": {
+          "format": "list",
+          "expectedResponses": "One pong per agent"
+        }
+      }
+    },
+    "communication": {
+      "direct_message": {
+        "aliases": ["ask"],
+        "description": "Send a message directly to a specific agent",
+        "syntax": "@<agent-id> <message>",
+        "minArgs": 2,
+        "maxArgs": -1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "message": {
+            "type": "string",
+            "required": true,
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Message text"
+          }
+        },
+        "examples": [
+          "@T14 what are you working on?",
+          "@T14 switch to opus model",
+          "ask T14 show me your queue"
+        ],
+        "response": {
+          "format": "text",
+          "timeout": 30000,
+          "timeoutMessage": "Agent {agentId} did not respond (may be disconnected)"
+        }
+      },
+      "broadcast": {
+        "aliases": [],
+        "description": "Send message to all connected agents",
+        "syntax": "broadcast <message>",
+        "minArgs": 1,
+        "maxArgs": -1,
+        "parameters": {
+          "message": {
+            "type": "string",
+            "required": true,
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Broadcast message"
+          }
+        },
+        "examples": [
+          "broadcast who can investigate the Redis timeout?",
+          "broadcast please update your status"
+        ],
+        "response": {
+          "format": "list",
+          "expectedResponses": "One response per agent (optional)"
+        }
+      }
+    },
+    "queue": {
+      "queue": {
+        "aliases": ["show queue"],
+        "description": "View tasks in agent's queue",
+        "syntax": "queue <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Agent ID to query"
+          }
+        },
+        "examples": [
+          "queue T14",
+          "show queue T14"
+        ],
+        "response": {
+          "format": "table",
+          "columns": ["Task ID", "Description", "Priority", "Status"]
+        }
+      },
+      "tasks": {
+        "aliases": ["all tasks", "list tasks"],
+        "description": "View all tasks across all agents",
+        "syntax": "tasks",
+        "minArgs": 0,
+        "maxArgs": 0,
+        "parameters": {},
+        "examples": [
+          "tasks",
+          "all tasks"
+        ],
+        "response": {
+          "format": "grouped_table",
+          "groupBy": "Agent ID",
+          "columns": ["Task ID", "Description", "Priority", "Status"]
+        }
+      },
+      "assign": {
+        "aliases": [],
+        "description": "Assign a task to a specific agent",
+        "syntax": "assign <agent-id> <task-description>",
+        "minArgs": 2,
+        "maxArgs": -1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "taskDescription": {
+            "type": "string",
+            "required": true,
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Task description"
+          }
+        },
+        "examples": [
+          "assign T14 investigate memory leak in SignalR hub",
+          "assign T15 write unit tests for CommandParser"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Task ID", "Agent ID", "Description"]
+        },
+        "errors": [
+          {
+            "code": "AGENT_NOT_FOUND",
+            "condition": "Agent ID doesn't exist",
+            "message": "Agent {agentId} not found. Use 'list agents' to see connected agents."
+          },
+          {
+            "code": "QUEUE_FULL",
+            "condition": "Agent queue at capacity",
+            "message": "Agent {agentId} queue is full ({current}/{limit}). Increase limit with: config {agentId} queue-limit <number>"
+          }
+        ]
+      },
+      "cancel": {
+        "aliases": ["cancel task"],
+        "description": "Cancel a pending or in-progress task",
+        "syntax": "cancel <task-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "taskId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "description": "UUID of task to cancel"
+          }
+        },
+        "examples": [
+          "cancel 550e8400-e29b-41d4-a716-446655440000",
+          "cancel task 550e8400-e29b-41d4-a716-446655440000"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Task ID", "Previous Status"]
+        },
+        "errors": [
+          {
+            "code": "TASK_NOT_FOUND",
+            "condition": "Task ID doesn't exist",
+            "message": "Task {taskId} not found. Use 'tasks' to see all tasks."
+          }
+        ]
+      },
+      "priority": {
+        "aliases": ["set priority"],
+        "description": "Change task priority (1=highest, 5=lowest)",
+        "syntax": "priority <task-id> <level>",
+        "minArgs": 2,
+        "maxArgs": 2,
+        "parameters": {
+          "taskId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "description": "UUID of task"
+          },
+          "level": {
+            "type": "string",
+            "required": true,
+            "enum": ["1", "2", "3", "4", "5", "high", "medium", "low"],
+            "description": "Priority level (1-5 or high/medium/low)"
+          }
+        },
+        "examples": [
+          "priority 550e8400-e29b-41d4-a716-446655440000 high",
+          "priority 550e8400-e29b-41d4-a716-446655440000 2"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Task ID", "New Priority", "Queue Position"]
+        },
+        "errors": [
+          {
+            "code": "INVALID_PRIORITY",
+            "condition": "Priority value not recognized",
+            "message": "Invalid priority: {level}. Use 1-5 or high/medium/low."
+          }
+        ]
+      }
+    },
+    "config": {
+      "config_model": {
+        "aliases": ["set model"],
+        "description": "Change agent's Claude model",
+        "syntax": "config <agent-id> model <model-name>",
+        "minArgs": 3,
+        "maxArgs": 3,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "modelName": {
+            "type": "string",
+            "required": true,
+            "enum": ["sonnet", "opus", "haiku"],
+            "description": "Claude model name"
+          }
+        },
+        "examples": [
+          "config T14 model opus",
+          "set model T14 haiku"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Agent ID", "New Model", "Previous Model"]
+        },
+        "errors": [
+          {
+            "code": "INVALID_MODEL",
+            "condition": "Model name not recognized",
+            "message": "Invalid model: {modelName}. Use sonnet, opus, or haiku."
+          }
+        ]
+      },
+      "config_role": {
+        "aliases": ["set role"],
+        "description": "Change agent's role",
+        "syntax": "config <agent-id> role <role-name>",
+        "minArgs": 3,
+        "maxArgs": 3,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "roleName": {
+            "type": "string",
+            "required": true,
+            "enum": ["developer", "tester", "devops", "pm"],
+            "description": "Agent role"
+          }
+        },
+        "examples": [
+          "config T14 role tester",
+          "set role T14 developer"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Agent ID", "New Role", "Previous Role"]
+        }
+      },
+      "config_queue_limit": {
+        "aliases": ["set queue limit"],
+        "description": "Change agent's maximum queue depth",
+        "syntax": "config <agent-id> queue-limit <number>",
+        "minArgs": 3,
+        "maxArgs": 3,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "limit": {
+            "type": "number",
+            "required": true,
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Queue depth limit"
+          }
+        },
+        "examples": [
+          "config T14 queue-limit 100",
+          "set queue limit T14 25"
+        ],
+        "response": {
+          "format": "confirmation",
+          "data": ["Agent ID", "New Limit", "Current Queue Size"]
+        }
+      },
+      "config_show": {
+        "aliases": ["show config"],
+        "description": "Display agent's current configuration",
+        "syntax": "config <agent-id> show",
+        "minArgs": 2,
+        "maxArgs": 2,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "config T14 show",
+          "show config T14"
+        ],
+        "response": {
+          "format": "sections",
+          "fields": ["Agent ID", "Role", "Model", "Queue Limit", "Status", "Last Updated"]
+        }
+      },
+      "pause": {
+        "aliases": [],
+        "description": "Pause agent (stops accepting new tasks)",
+        "syntax": "pause <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "pause T14"
+        ],
+        "response": {
+          "format": "confirmation",
+          "message": "Agent {agentId} paused (will finish current task first)"
+        }
+      },
+      "resume": {
+        "aliases": [],
+        "description": "Resume paused agent",
+        "syntax": "resume <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "resume T14"
+        ],
+        "response": {
+          "format": "confirmation",
+          "message": "Agent {agentId} resumed"
+        }
+      }
+    },
+    "monitoring": {
+      "logs": {
+        "aliases": ["show logs"],
+        "description": "Retrieve agent's recent log entries",
+        "syntax": "logs <agent-id> [<count>]",
+        "minArgs": 1,
+        "maxArgs": 2,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          },
+          "count": {
+            "type": "number",
+            "required": false,
+            "default": 50,
+            "minimum": 1,
+            "maximum": 500,
+            "description": "Number of log entries"
+          }
+        },
+        "examples": [
+          "logs T14",
+          "logs T14 20",
+          "show logs T14 100"
+        ],
+        "response": {
+          "format": "code_block",
+          "syntax": "log"
+        }
+      },
+      "metrics": {
+        "aliases": ["show metrics", "stats"],
+        "description": "Display agent's performance metrics",
+        "syntax": "metrics <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "metrics T14",
+          "stats T14"
+        ],
+        "response": {
+          "format": "sections",
+          "fields": ["Total Tasks", "Completed", "Failed", "Success Rate", "Avg Completion Time", "Uptime"]
+        }
+      },
+      "errors": {
+        "aliases": ["show errors"],
+        "description": "Display recent errors across all agents",
+        "syntax": "errors",
+        "minArgs": 0,
+        "maxArgs": 0,
+        "parameters": {},
+        "examples": [
+          "errors",
+          "show errors"
+        ],
+        "response": {
+          "format": "table",
+          "columns": ["Timestamp", "Agent ID", "Error Message"]
+        }
+      },
+      "history": {
+        "aliases": ["task history"],
+        "description": "Show agent's task completion history",
+        "syntax": "history <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "history T14",
+          "task history T14"
+        ],
+        "response": {
+          "format": "table",
+          "columns": ["Task ID", "Description", "Status", "Completed At", "Duration"]
+        }
+      }
+    },
+    "system": {
+      "help": {
+        "aliases": ["?"],
+        "description": "Show available commands",
+        "syntax": "help [<category>]",
+        "minArgs": 0,
+        "maxArgs": 1,
+        "parameters": {
+          "category": {
+            "type": "string",
+            "required": false,
+            "enum": ["discovery", "communication", "queue", "config", "monitoring", "system"],
+            "description": "Command category"
+          }
+        },
+        "examples": [
+          "help",
+          "help config",
+          "?"
+        ],
+        "response": {
+          "format": "sections",
+          "grouped": true
+        }
+      },
+      "version": {
+        "aliases": [],
+        "description": "Show system version information",
+        "syntax": "version",
+        "minArgs": 0,
+        "maxArgs": 0,
+        "parameters": {},
+        "examples": [
+          "version"
+        ],
+        "response": {
+          "format": "sections",
+          "fields": ["Relay Server Version", "MCP Server Version", "Agent Versions"]
+        }
+      },
+      "restart": {
+        "aliases": [],
+        "description": "Gracefully restart an agent",
+        "syntax": "restart <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "restart T14"
+        ],
+        "response": {
+          "format": "confirmation",
+          "message": "Agent {agentId} is restarting (will finish current task first)"
+        }
+      },
+      "shutdown": {
+        "aliases": ["stop"],
+        "description": "Gracefully shutdown an agent",
+        "syntax": "shutdown <agent-id>",
+        "minArgs": 1,
+        "maxArgs": 1,
+        "parameters": {
+          "agentId": {
+            "type": "string",
+            "required": true,
+            "pattern": "^[A-Z0-9_-]+$",
+            "description": "Target agent ID"
+          }
+        },
+        "examples": [
+          "shutdown T14",
+          "stop T14"
+        ],
+        "response": {
+          "format": "confirmation",
+          "message": "Agent {agentId} is shutting down (will finish current task first)"
+        }
+      }
+    }
+  },
+  "errorCodes": {
+    "AGENT_NOT_FOUND": {
+      "description": "Target agent doesn't exist or is disconnected",
+      "userAction": "Use 'list agents' to see connected agents"
+    },
+    "QUEUE_FULL": {
+      "description": "Agent's task queue is at capacity",
+      "userAction": "Increase limit with: config <agent-id> queue-limit <number>"
+    },
+    "INVALID_MODEL": {
+      "description": "Model name not recognized",
+      "userAction": "Use sonnet, opus, or haiku"
+    },
+    "INVALID_PRIORITY": {
+      "description": "Priority value out of range",
+      "userAction": "Use 1-5 or high/medium/low"
+    },
+    "INVALID_ROLE": {
+      "description": "Role name not recognized",
+      "userAction": "Use developer, tester, devops, or pm"
+    },
+    "TASK_NOT_FOUND": {
+      "description": "Task ID doesn't exist",
+      "userAction": "Use 'tasks' to see all active tasks"
+    },
+    "AGENT_TIMEOUT": {
+      "description": "Agent didn't respond within 30 seconds",
+      "userAction": "Agent may be disconnected or busy"
+    },
+    "PERMISSION_DENIED": {
+      "description": "User not authorized for this command",
+      "userAction": "Contact system administrator"
+    },
+    "INVALID_SYNTAX": {
+      "description": "Command syntax is incorrect",
+      "userAction": "Use 'help <command>' to see correct syntax"
+    },
+    "CONFIG_ERROR": {
+      "description": "Failed to read or write agent configuration",
+      "userAction": "Check file permissions in ~/.config/coorchat/"
+    }
+  },
+  "responseFormats": {
+    "table": {
+      "description": "Block Kit Table for tabular data",
+      "limit": "90 rows max (paginate beyond)"
+    },
+    "sections": {
+      "description": "Block Kit Sections for key-value data",
+      "limit": "50 blocks max"
+    },
+    "text": {
+      "description": "Simple mrkdwn text",
+      "limit": "40,000 characters"
+    },
+    "code_block": {
+      "description": "Formatted code block with syntax highlighting",
+      "limit": "3,000 characters per block"
+    },
+    "confirmation": {
+      "description": "Success message with emoji indicator",
+      "format": "✅ <message>"
+    },
+    "error": {
+      "description": "Error message with emoji and code",
+      "format": "❌ Error: <message> (Code: <errorCode>)"
+    }
+  }
+}
