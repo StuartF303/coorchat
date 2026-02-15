@@ -17,6 +17,8 @@ export enum MessageType {
   CAPABILITY_RESPONSE = 'capability_response',
   STATUS_QUERY = 'status_query',
   STATUS_RESPONSE = 'status_response',
+  DIRECT_MESSAGE = 'direct_message',
+  BROADCAST = 'broadcast',
   ERROR = 'error',
   HEARTBEAT = 'heartbeat',
   AGENT_JOINED = 'agent_joined',
@@ -98,6 +100,24 @@ export interface CapabilityResponsePayload {
 }
 
 /**
+ * Payload for direct_message messages
+ */
+export interface DirectMessagePayload {
+  text: string;
+  userId: string;
+  expectsResponse?: boolean;
+  timeoutMs?: number;
+}
+
+/**
+ * Payload for broadcast messages
+ */
+export interface BroadcastPayload {
+  text: string;
+  userId: string;
+}
+
+/**
  * Payload for error messages
  */
 export interface ErrorPayload {
@@ -115,6 +135,8 @@ export type MessagePayload =
   | TaskCompletedPayload
   | TaskFailedPayload
   | CapabilityResponsePayload
+  | DirectMessagePayload
+  | BroadcastPayload
   | ErrorPayload
   | Record<string, unknown>;
 

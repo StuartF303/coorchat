@@ -49,13 +49,40 @@ async function main() {
     });
   });
 
+  // Initialize CommandRegistry for command-based interaction
+  const { CommandRegistry } = await import('./commands/CommandRegistry.js');
+  const registry = new CommandRegistry(channel);
+
   // Set up text message handler (for plain text messages)
-  channel.onTextMessage((text, userId) => {
+  channel.onTextMessage(async (text, userId) => {
     console.log('💬 Received text message:', {
       text,
       from: userId,
       timestamp: new Date().toISOString(),
     });
+
+    // Handle legacy ping command (for backward compatibility)
+    if (text.trim().toLowerCase() === 'ping') {
+      const agentName = process.env.AGENT_ID || 'unknown';
+      const response = `pong - ${agentName}`;
+
+      console.log(`🏓 Responding to ping with: ${response}`);
+
+      try {
+        await channel.sendText(response);
+        console.log('✅ Pong sent successfully');
+      } catch (error) {
+        console.error('❌ Failed to send pong:', error);
+      }
+      return;
+    }
+
+    // Route all other messages to CommandRegistry
+    try {
+      await registry.handleCommand(text, userId);
+    } catch (error) {
+      console.error('❌ Command handling error:', error);
+    }
   });
 
   // Set up error handler
