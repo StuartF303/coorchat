@@ -129,10 +129,10 @@ describe('SignalRChannel', () => {
     });
 
     it('should throw error on connection failure', async () => {
-      const connection = (signalR.HubConnectionBuilder as any).mock.results[0].value.build();
-      connection.start.mockRejectedValueOnce(new Error('Connection failed'));
-
       channel = new SignalRChannel(config);
+
+      const connection = (channel as any).connection;
+      connection.start.mockRejectedValueOnce(new Error('Connection failed'));
 
       await expect(channel.connect()).rejects.toThrow('Failed to connect to SignalR hub');
     });
@@ -155,12 +155,13 @@ describe('SignalRChannel', () => {
 
     it('should send message via SignalR', async () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
-        payload: { taskId: 'task-1' },
+        priority: 5,
+        taskId: '123e4567-e89b-12d3-a456-426655440000',
+        payload: { taskId: '123e4567-e89b-12d3-a456-426655440000', description: 'Test task', githubIssue: 'TEST-1' },
       };
 
       await channel.sendMessage(message);
@@ -168,7 +169,7 @@ describe('SignalRChannel', () => {
       const connection = (channel as any).connection;
       expect(connection.invoke).toHaveBeenCalledWith(
         'SendMessage',
-        expect.stringContaining('TASK_ASSIGNED')
+        expect.stringContaining('task_assigned')
       );
     });
 
@@ -177,11 +178,11 @@ describe('SignalRChannel', () => {
       connection.state = signalR.HubConnectionState.Disconnected;
 
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       await expect(channel.sendMessage(message)).rejects.toThrow(
@@ -201,12 +202,13 @@ describe('SignalRChannel', () => {
       channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
-        payload: { taskId: 'task-1' },
+        priority: 5,
+        taskId: '123e4567-e89b-12d3-a456-426655440000',
+        payload: { taskId: '123e4567-e89b-12d3-a456-426655440000', description: 'Test task', githubIssue: 'TEST-1' },
       };
 
       // Get the ReceiveMessage handler and simulate message
@@ -299,6 +301,11 @@ describe('SignalRChannel', () => {
     beforeEach(async () => {
       channel = new SignalRChannel(config);
       await channel.connect();
+
+      // Ensure connection state is set to Connected and clear invoke calls
+      const connection = (channel as any).connection;
+      connection.state = signalR.HubConnectionState.Connected;
+      connection.invoke.mockClear();
     });
 
     it('should ping SignalR hub successfully', async () => {
@@ -332,11 +339,11 @@ describe('SignalRChannel', () => {
     it('should fetch message history when supported', async () => {
       const connection = (channel as any).connection;
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       connection.invoke.mockResolvedValueOnce([JSON.stringify(testMessage)]);

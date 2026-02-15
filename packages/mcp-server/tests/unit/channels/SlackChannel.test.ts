@@ -141,11 +141,11 @@ describe('SlackChannel', () => {
 
     it('should send protocol message to Slack', async () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { taskId: 'task-1' },
       };
 
@@ -171,11 +171,11 @@ describe('SlackChannel', () => {
     it('should reject message exceeding 40000 character limit', async () => {
       const largePayload = 'x'.repeat(40100);
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { data: largePayload },
       };
 
@@ -196,12 +196,13 @@ describe('SlackChannel', () => {
       channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
-        payload: { taskId: 'task-1' },
+        priority: 5,
+        taskId: '123e4567-e89b-12d3-a456-426655440000',
+        payload: { taskId: '123e4567-e89b-12d3-a456-426655440000', description: 'Test task', githubIssue: 'TEST-1' },
       };
 
       // Simulate incoming Slack message
@@ -404,11 +405,11 @@ describe('SlackChannel', () => {
     it('should fetch message history', async () => {
       const webClient = (channel as any).webClient;
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       webClient.conversations.history.mockResolvedValueOnce({

@@ -135,11 +135,11 @@ describe('DiscordChannel', () => {
 
     it('should send message to Discord channel', async () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { taskId: 'task-1' },
       };
 
@@ -156,11 +156,11 @@ describe('DiscordChannel', () => {
     it('should reject message exceeding 2000 character limit', async () => {
       const largePayload = 'x'.repeat(2100);
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { data: largePayload },
       };
 
@@ -173,11 +173,11 @@ describe('DiscordChannel', () => {
       await channel.disconnect();
 
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       await expect(channel.sendMessage(message)).rejects.toThrow(
@@ -233,7 +233,7 @@ describe('DiscordChannel', () => {
         content: JSON.stringify({
           protocolVersion: '1.0',
           messageType: MessageType.HEARTBEAT,
-          senderId: 'agent-1',
+          senderId: '550e8400-e29b-41d4-a716-446655440000',
           timestamp: new Date().toISOString(),
           priority: 3,
         }),

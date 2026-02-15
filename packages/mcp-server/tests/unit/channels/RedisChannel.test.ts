@@ -144,11 +144,11 @@ describe('RedisChannel', () => {
 
     it('should send message with authentication signature', async () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { taskId: 'task-1' },
       };
 
@@ -157,7 +157,7 @@ describe('RedisChannel', () => {
       const publisher = (channel as any).publisher;
       expect(publisher.publish).toHaveBeenCalledWith(
         'test:channel',
-        expect.stringContaining('TASK_ASSIGNED')
+        expect.stringContaining('task_assigned')
       );
       expect(publisher.publish).toHaveBeenCalledWith(
         'test:channel',
@@ -170,11 +170,11 @@ describe('RedisChannel', () => {
       publisher.publish.mockResolvedValueOnce(5);
 
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       await channel.sendMessage(message);
@@ -194,12 +194,13 @@ describe('RedisChannel', () => {
       channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
-        payload: { taskId: 'task-1' },
+        priority: 5,
+        taskId: '123e4567-e89b-12d3-a456-426655440000',
+        payload: { taskId: '123e4567-e89b-12d3-a456-426655440000', description: 'Test task', githubIssue: 'TEST-1' },
       };
 
       // Add auth signature
@@ -223,11 +224,11 @@ describe('RedisChannel', () => {
       channel.onMessage((msg) => receivedMessages.push(msg));
 
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.TASK_ASSIGNED,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'medium' as const,
+        priority: 5,
         payload: { taskId: 'task-1' },
         _auth: 'invalid-signature',
       };
@@ -285,11 +286,11 @@ describe('RedisChannel', () => {
     it('should fetch message history from Redis list', async () => {
       const publisher = (channel as any).publisher;
       const testMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       publisher.lrange.mockResolvedValueOnce([JSON.stringify(testMessage)]);
@@ -305,11 +306,11 @@ describe('RedisChannel', () => {
       const publisher = (channel as any).publisher;
       const beforeDate = new Date();
       const oldMessage = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date(beforeDate.getTime() - 1000).toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
       const newMessage = {
         ...oldMessage,
@@ -345,11 +346,11 @@ describe('RedisChannel', () => {
 
     it('should create consistent HMAC signatures', () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       const sig1 = (channel as any).createAuthSignature(message);
@@ -361,11 +362,11 @@ describe('RedisChannel', () => {
 
     it('should verify valid signatures', () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
       };
 
       const signature = (channel as any).createAuthSignature(message);
@@ -378,11 +379,11 @@ describe('RedisChannel', () => {
 
     it('should reject invalid signatures', () => {
       const message = {
-        protocolVersion: '1.0.0',
+        protocolVersion: '1.0',
         messageType: MessageType.HEARTBEAT,
-        senderId: 'agent-1',
+        senderId: '550e8400-e29b-41d4-a716-446655440000',
         timestamp: new Date().toISOString(),
-        priority: 'low' as const,
+        priority: 3,
         _auth: 'invalid-signature-12345',
       };
 
