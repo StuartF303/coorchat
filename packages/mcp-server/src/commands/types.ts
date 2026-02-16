@@ -6,6 +6,7 @@
 import type { SlackChannel } from '../channels/slack/SlackChannel.js';
 import type { AgentRegistry } from '../agents/AgentRegistry.js';
 import type { TaskManager } from '../tasks/TaskManager.js';
+import type { TaskWorker } from '../tasks/TaskWorker.js';
 
 /**
  * Command categories
@@ -60,7 +61,8 @@ export interface CommandDef {
     channel: SlackChannel,
     registry?: AgentRegistry,
     taskManager?: TaskManager,
-    commandRegistry?: any  // Avoid circular dependency with CommandRegistry
+    commandRegistry?: any,  // Avoid circular dependency with CommandRegistry
+    worker?: TaskWorker,
   ) => Promise<void>;
 }
 

@@ -45,6 +45,11 @@ import {
   restart,
   shutdown,
 } from './handlers/SystemCommands.js';
+import {
+  abortTask,
+  runNext,
+} from './handlers/ExecutionCommands.js';
+import type { TaskWorker } from '../tasks/TaskWorker.js';
 
 export class CommandRegistry {
   private commands: Map<string, CommandDef> = new Map();
@@ -52,15 +57,24 @@ export class CommandRegistry {
   private channel: SlackChannel;
   private registry?: AgentRegistry;
   private taskManager?: TaskManager;
+  private worker?: TaskWorker;
 
-  constructor(channel: SlackChannel, registry?: AgentRegistry, taskManager?: TaskManager) {
+  constructor(channel: SlackChannel, registry?: AgentRegistry, taskManager?: TaskManager, worker?: TaskWorker) {
     this.channel = channel;
     this.registry = registry;
     this.taskManager = taskManager;
+    this.worker = worker;
     this.parser = new CommandParser();
 
     // Register built-in commands
     this.registerBuiltinCommands();
+  }
+
+  /**
+   * Set the task worker (can be set after construction)
+   */
+  setWorker(worker: TaskWorker): void {
+    this.worker = worker;
   }
 
   /**
@@ -264,6 +278,24 @@ export class CommandRegistry {
       examples: ['shutdown T14'],
       execute: shutdown,
     });
+
+    // Task Execution Commands
+
+    this.register('abort', {
+      minArgs: 0,
+      maxArgs: 0,
+      description: 'Abort the currently running task',
+      examples: ['abort'],
+      execute: abortTask,
+    });
+
+    this.register('run', {
+      minArgs: 1,
+      maxArgs: 1,
+      description: 'Manually trigger task processing',
+      examples: ['run next'],
+      execute: runNext,
+    });
   }
 
   /**
@@ -346,7 +378,7 @@ export class CommandRegistry {
       }
 
       // Execute command
-      await commandDef.execute(tokens, userId, this.channel, this.registry, this.taskManager, this);
+      await commandDef.execute(tokens, userId, this.channel, this.registry, this.taskManager, this, this.worker);
 
     } catch (error) {
       console.error('Command execution error:', error);

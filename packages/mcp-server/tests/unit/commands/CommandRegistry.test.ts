@@ -76,7 +76,8 @@ describe('CommandRegistry', () => {
         mockChannel,
         undefined,
         undefined,
-        registry
+        registry,
+        undefined
       );
     });
 

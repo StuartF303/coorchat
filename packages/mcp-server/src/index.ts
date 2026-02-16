@@ -87,8 +87,34 @@ async function main() {
     lastSeenAt: new Date(),
   });
 
-  // Create command registry with full dependencies
+  // Import task execution components
+  const { TaskExecutor } = await import('./tasks/TaskExecutor.js');
+  const { TaskWorker } = await import('./tasks/TaskWorker.js');
+
+  // Create task executor and worker
+  const executor = new TaskExecutor({
+    workingDirectory: process.env.TASK_WORKING_DIR || process.cwd(),
+    timeoutMs: parseInt(process.env.TASK_TIMEOUT_MS || '600000', 10),
+  });
+
+  const worker = new TaskWorker({
+    agentId,
+    taskManager,
+    executor,
+    channel,
+    agentRegistry,
+  });
+
+  // Create command registry with full dependencies (worker set after)
   const commandRegistry = new CommandRegistry(channel, agentRegistry, taskManager);
+  commandRegistry.setWorker(worker);
+
+  // Wake worker when tasks are added for this agent
+  taskManager.onTaskAdded((addedAgentId) => {
+    if (addedAgentId.toLowerCase() === agentId.toLowerCase()) {
+      worker.notify();
+    }
+  });
 
   // Set up text message handler (for plain text messages)
   channel.onTextMessage(async (text, userId) => {
@@ -141,6 +167,11 @@ async function main() {
     console.log(`👤 Agent Role: ${agentRole}`);
     console.log(`📊 Agent Registry: ${agentRegistry.getAll().length} agent(s) registered`);
     console.log(`📝 Commands available: 30+ (type "help" in Slack)`);
+
+    // Start the task worker
+    worker.start();
+    console.log(`⚙️  Task worker started`);
+
     console.log('\n💬 Waiting for messages...\n');
   } catch (error) {
     console.error('❌ Failed to connect:', error);
@@ -160,6 +191,7 @@ async function main() {
   // Handle graceful shutdown
   const shutdown = async () => {
     console.log('\n\n👋 Shutting down...');
+    await worker.stop();
     clearInterval(heartbeatInterval);
     agentRegistry.destroy();
     await channel.disconnect();

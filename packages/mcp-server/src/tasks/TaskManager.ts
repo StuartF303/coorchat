@@ -27,12 +27,14 @@ export class TaskManager {
   private allTasks: Map<string, Task>; // taskId → Task
   private logger: Logger;
   private maxQueueSizePerAgent: number;
+  private taskAddedCallbacks: Set<(agentId: string, task: Task) => void>;
 
   constructor(config: TaskManagerConfig = {}) {
     this.agentQueues = new Map();
     this.allTasks = new Map();
     this.logger = config.logger || createLogger();
     this.maxQueueSizePerAgent = config.maxQueueSizePerAgent || 50;
+    this.taskAddedCallbacks = new Set();
   }
 
   /**
@@ -75,7 +77,7 @@ export class TaskManager {
   getAllTasks(): Map<string, Task[]> {
     const result = new Map<string, Task[]>();
 
-    for (const [agentId, queue] of this.agentQueues.entries()) {
+    for (const [agentId, _queue] of this.agentQueues.entries()) {
       const tasks = this.getQueue(agentId);
       if (tasks.length > 0) {
         result.set(agentId, tasks);
@@ -120,6 +122,17 @@ export class TaskManager {
         agentId,
         queueSize: queue.size(),
       });
+
+      // Notify task-added callbacks
+      for (const cb of this.taskAddedCallbacks) {
+        try {
+          cb(agentId, task);
+        } catch (err) {
+          this.logger.error('Error in onTaskAdded callback', {
+            error: err instanceof Error ? err : new Error(String(err)),
+          });
+        }
+      }
     } catch (error) {
       this.logger.error('Failed to add task to queue', {
         taskId: task.id,
@@ -225,5 +238,21 @@ export class TaskManager {
     this.agentQueues.clear();
     this.allTasks.clear();
     this.logger.info('All task queues cleared');
+  }
+
+  /**
+   * Expose raw TaskQueue for lifecycle operations (used by TaskWorker)
+   */
+  getTaskQueue(agentId: string): TaskQueue | undefined {
+    return this.agentQueues.get(agentId);
+  }
+
+  /**
+   * Register callback for task additions (used to wake the worker)
+   * Returns unsubscribe function
+   */
+  onTaskAdded(callback: (agentId: string, task: Task) => void): () => void {
+    this.taskAddedCallbacks.add(callback);
+    return () => this.taskAddedCallbacks.delete(callback);
   }
 }
