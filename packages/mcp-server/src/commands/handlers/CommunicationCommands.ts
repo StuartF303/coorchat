@@ -13,8 +13,6 @@ import type { SlackChannel } from '../../channels/slack/SlackChannel.js';
 import { SlackFormatter } from '../formatters/SlackFormatter.js';
 import { ErrorCode } from '../types.js';
 import { AgentStatus } from '../../agents/Agent.js';
-import { MessageType } from '../../protocol/Message.js';
-import type { DirectMessagePayload, BroadcastPayload } from '../../protocol/Message.js';
 
 /**
  * Response timeout in milliseconds (30 seconds)
@@ -26,7 +24,7 @@ const RESPONSE_TIMEOUT_MS = 30000;
  */
 export async function directMessage(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
@@ -95,7 +93,7 @@ export async function directMessage(
  */
 export async function broadcast(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
@@ -154,7 +152,7 @@ export async function broadcast(
  */
 export async function ask(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {

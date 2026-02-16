@@ -20,7 +20,7 @@ import { ErrorCode } from '../types.js';
  */
 export async function queueView(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
   taskManager?: TaskManager
@@ -87,10 +87,10 @@ export async function queueView(
  * Display all tasks grouped by agent
  */
 export async function allTasks(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
-  registry?: AgentRegistry,
+  _registry?: AgentRegistry,
   taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
@@ -134,9 +134,9 @@ export async function allTasks(
  */
 export async function cancelTask(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
-  registry?: AgentRegistry,
+  _registry?: AgentRegistry,
   taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);

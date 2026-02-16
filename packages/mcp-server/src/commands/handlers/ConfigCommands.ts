@@ -15,7 +15,6 @@ import type { AgentRegistry } from '../../agents/AgentRegistry.js';
 import type { SlackChannel } from '../../channels/slack/SlackChannel.js';
 import type { TaskManager } from '../../tasks/TaskManager.js';
 import { SlackFormatter } from '../formatters/SlackFormatter.js';
-import { ResponseBuilder } from '../formatters/ResponseBuilder.js';
 import { ErrorCode } from '../types.js';
 import { AgentStatus } from '../../agents/Agent.js';
 
@@ -35,7 +34,7 @@ const MAX_QUEUE_LIMIT = 1000;
  */
 export async function config(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
   taskManager?: TaskManager
@@ -156,7 +155,7 @@ async function configQueueLimit(
   tokens: string[],
   agentId: string,
   formatter: SlackFormatter,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const limitStr = tokens[3];
 
@@ -221,10 +220,10 @@ async function configShow(
  */
 export async function pause(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 
@@ -264,10 +263,10 @@ export async function pause(
  */
 export async function resume(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 

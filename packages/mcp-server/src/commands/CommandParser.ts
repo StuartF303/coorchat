@@ -3,7 +3,7 @@
  * Parses natural language text commands into structured Command objects
  */
 
-import type { Command, CommandType } from './types.js';
+
 
 export class CommandParser {
   /**

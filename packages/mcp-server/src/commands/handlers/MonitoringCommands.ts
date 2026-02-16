@@ -13,7 +13,6 @@ import type { AgentRegistry } from '../../agents/AgentRegistry.js';
 import type { SlackChannel } from '../../channels/slack/SlackChannel.js';
 import type { TaskManager } from '../../tasks/TaskManager.js';
 import { SlackFormatter } from '../formatters/SlackFormatter.js';
-import { ResponseBuilder } from '../formatters/ResponseBuilder.js';
 import { ErrorCode } from '../types.js';
 
 /**
@@ -26,10 +25,10 @@ const DEFAULT_LOG_COUNT = 50;
  */
 export async function logs(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 
@@ -82,7 +81,7 @@ export async function logs(
  */
 export async function metrics(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
   taskManager?: TaskManager
@@ -142,11 +141,11 @@ export async function metrics(
  * Show recent errors across all agents
  */
 export async function errors(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
-  registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _registry?: AgentRegistry,
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 
@@ -162,7 +161,7 @@ export async function errors(
  */
 export async function history(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
   taskManager?: TaskManager

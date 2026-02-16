@@ -35,7 +35,7 @@ const PRIORITY_MAP: Record<string, number> = {
  */
 export async function assignTask(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
   taskManager?: TaskManager
@@ -131,9 +131,9 @@ export async function assignTask(
  */
 export async function updatePriority(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
-  registry?: AgentRegistry,
+  _registry?: AgentRegistry,
   taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);

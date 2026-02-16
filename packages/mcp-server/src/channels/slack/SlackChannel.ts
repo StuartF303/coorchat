@@ -53,7 +53,7 @@ export class SlackChannel extends ChannelAdapter {
    */
   private setupEventHandlers(): void {
     // Handle all events_api envelopes (this is how Socket Mode delivers events)
-    this.socketClient.on('events_api', async ({ event, body, ack }) => {
+    this.socketClient.on('events_api', async ({ event, body: _body, ack }) => {
       console.log('🔔 Events API envelope received:', {
         eventType: event?.type,
         subtype: event?.subtype,

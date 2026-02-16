@@ -14,7 +14,6 @@ import type { SlackChannel } from '../../channels/slack/SlackChannel.js';
 import type { TaskManager } from '../../tasks/TaskManager.js';
 import type { CommandRegistry } from '../CommandRegistry.js';
 import { SlackFormatter } from '../formatters/SlackFormatter.js';
-import { ResponseBuilder } from '../formatters/ResponseBuilder.js';
 import { ErrorCode } from '../types.js';
 
 /**
@@ -22,11 +21,11 @@ import { ErrorCode } from '../types.js';
  * Note: This requires access to CommandRegistry which is passed via context
  */
 export async function help(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
-  registry?: AgentRegistry,
-  taskManager?: TaskManager,
+  _registry?: AgentRegistry,
+  _taskManager?: TaskManager,
   commandRegistry?: CommandRegistry
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
@@ -69,11 +68,11 @@ export async function help(
  * Display version information
  */
 export async function version(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 
@@ -98,10 +97,10 @@ export async function version(
  */
 export async function restart(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 
@@ -140,10 +139,10 @@ export async function restart(
  */
 export async function shutdown(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry,
-  taskManager?: TaskManager
+  _taskManager?: TaskManager
 ): Promise<void> {
   const formatter = new SlackFormatter(channel);
 

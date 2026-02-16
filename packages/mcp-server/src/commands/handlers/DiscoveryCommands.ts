@@ -20,8 +20,8 @@ import { AgentStatus } from '../../agents/Agent.js';
  * List all connected agents
  */
 export async function listAgents(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
@@ -61,8 +61,8 @@ export async function listAgents(
  * Display pool status summary
  */
 export async function poolStatus(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
@@ -102,7 +102,7 @@ export async function poolStatus(
  */
 export async function agentStatus(
   tokens: string[],
-  userId: string,
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
@@ -171,8 +171,8 @@ export async function agentStatus(
  * Ping all connected agents
  */
 export async function pingAll(
-  tokens: string[],
-  userId: string,
+  _tokens: string[],
+  _userId: string,
   channel: SlackChannel,
   registry?: AgentRegistry
 ): Promise<void> {
