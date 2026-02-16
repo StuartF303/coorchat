@@ -57,7 +57,7 @@ export async function directMessage(
   }
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,
@@ -194,7 +194,7 @@ export async function ask(
   }
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,

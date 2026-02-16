@@ -46,7 +46,7 @@ export async function logs(
   const agentId = tokens[1];
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,
@@ -111,7 +111,7 @@ export async function metrics(
   const agentId = tokens[1];
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,
@@ -191,7 +191,7 @@ export async function history(
   const agentId = tokens[1];
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,

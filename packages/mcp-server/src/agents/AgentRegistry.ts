@@ -144,10 +144,32 @@ export class AgentRegistry {
   }
 
   /**
-   * Get agent by ID
+   * Get agent by ID (exact match)
    */
   getById(agentId: string): Agent | undefined {
     return this.agents.get(agentId);
+  }
+
+  /**
+   * Get agent by ID (case-insensitive)
+   * Tries exact match first, then falls back to case-insensitive search
+   */
+  getByIdCaseInsensitive(agentId: string): Agent | undefined {
+    // Try exact match first (fastest)
+    const exact = this.agents.get(agentId);
+    if (exact) {
+      return exact;
+    }
+
+    // Fall back to case-insensitive search
+    const lowerAgentId = agentId.toLowerCase();
+    for (const [id, agent] of this.agents.entries()) {
+      if (id.toLowerCase() === lowerAgentId) {
+        return agent;
+      }
+    }
+
+    return undefined;
   }
 
   /**

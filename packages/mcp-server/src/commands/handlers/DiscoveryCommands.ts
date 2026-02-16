@@ -128,7 +128,7 @@ export async function agentStatus(
     return;
   }
 
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,

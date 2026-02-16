@@ -67,7 +67,7 @@ export async function assignTask(
   const description = tokens.slice(2).join(' ').trim();
 
   // Verify agent exists
-  const agent = registry.getById(agentId);
+  const agent = registry.getByIdCaseInsensitive(agentId);
   if (!agent) {
     await formatter.sendError({
       code: ErrorCode.AGENT_NOT_FOUND,
