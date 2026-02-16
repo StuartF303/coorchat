@@ -1,5 +1,9 @@
 # 🤖 CoorChat
 
+> **DEPRECATED**: CoorChat has evolved into **[Brood](https://github.com/StuartF303/brood)** — a distributed AI agent platform built in C#/.NET 10 with A2A protocol support, cross-machine heterogeneous clusters, and multi-AI-provider abstraction. This repository is archived. All new development happens in the Brood repo.
+
+---
+
 <div align="center">
 
 **Multi-Agent Coordination System for AI-Powered Software Development**
